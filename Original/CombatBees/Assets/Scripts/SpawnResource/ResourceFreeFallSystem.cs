@@ -25,7 +25,6 @@ public class ResourceFreeFallSystem : JobComponentSystem
             CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             dt = Time.deltaTime,
             groundY = ground.Y,
-            gravity = k_Gravity
         }.Schedule(m_Query, inputDeps);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(handle);
@@ -37,7 +36,6 @@ public class ResourceFreeFallSystem : JobComponentSystem
         public EntityCommandBuffer.Concurrent CommandBuffer;
         public float dt;
         public float groundY;
-        public float gravity;
 
         public void Execute(Entity e, int index, ref Translation t)
         {
