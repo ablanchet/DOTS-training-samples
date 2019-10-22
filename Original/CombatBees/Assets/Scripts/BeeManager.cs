@@ -1,10 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Rendering;
+using Unity.Transforms;
 using UnityEngine;
 
-public class BeeManager : MonoBehaviour {
+[RequiresEntityConversion]
+public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
+{
 	public Mesh beeMesh;
-	public Material beeMaterial;
+    public GameObject beePrefab0;
+    public GameObject beePrefab1;
+    public Material beeMaterial;
 	public Color[] teamColors;
 	public float minBeeSize;
 	public float maxBeeSize;
@@ -129,7 +137,7 @@ public class BeeManager : MonoBehaviour {
 				}
 
 				Bee repellentFriend = allies[Random.Range(0,allies.Count)];
-				delta = attractiveFriend.position - bee.position;
+				delta = repellentFriend.position - bee.position;
 				dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
 				if (dist > 0f) {
 					bee.velocity -= delta * (teamRepulsion * deltaTime / dist);
@@ -272,4 +280,40 @@ public class BeeManager : MonoBehaviour {
 			}
 		}
 	}
+
+    public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+    {
+        var manager = World.Active.EntityManager;
+
+        //spawn bees
+        BeeSpawner spawner = World.Active.GetExistingSystem<BeeSpawner>();
+        spawner.BeePrototypes[0] = conversionSystem.GetPrimaryEntity(beePrefab0);
+        spawner.BeePrototypes[1] = conversionSystem.GetPrimaryEntity(beePrefab1);
+        spawner.maxBeeSize = maxBeeSize;
+        spawner.minBeeSize = minBeeSize;
+
+        int[] TeamSizes = new int[2] { startBeeCount - startBeeCount / 2, startBeeCount / 2 };
+
+        EntityArchetype spawnRequest = manager.CreateArchetype(new ComponentType[] {typeof(Translation), typeof(BeeSpawnRequest)});
+
+        for (sbyte teamindex = 0; teamindex < TeamSizes.Length; ++teamindex)
+        {
+            Vector3 pos = Vector3.right * (-Field.size.x * .4f + Field.size.x * .8f * teamindex);
+            using (NativeArray<Entity> spawnEntities = new NativeArray<Entity>(TeamSizes[teamindex], Allocator.Temp))
+            {
+                manager.CreateEntity(spawnRequest, spawnEntities);
+                for (int x = 0; x < spawnEntities.Length; ++x)
+                {
+                    manager.SetComponentData(spawnEntities[x], new BeeSpawnRequest() { Team = teamindex });
+                    manager.SetComponentData(spawnEntities[x], new Translation() { Value = pos });
+                }
+            }
+        }
+    }
+
+    public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
+    {
+        referencedPrefabs.Add(beePrefab0);
+        referencedPrefabs.Add(beePrefab1);
+    }
 }
