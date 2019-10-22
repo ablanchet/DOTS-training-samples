@@ -14,3 +14,8 @@ public struct SpawnerResourceOnStartTag : IComponentData
 {
 
 }
+
+public struct ResourceFreeFallTag : IComponentData
+{
+
+}

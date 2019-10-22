@@ -19,6 +19,7 @@ public class SpawnerResourceSystem : ComponentSystem
                 var pos = random.NextFloat3(minGridPos, maxGridPos);
                 var instance = PostUpdateCommands.Instantiate(componentData.ResourcePrefab);
                 PostUpdateCommands.SetComponent(instance, new Translation { Value = pos });
+                PostUpdateCommands.AddComponent(instance, new ResourceFreeFallTag());
             }
 
             PostUpdateCommands.RemoveComponent<SpawnerResourceOnStartTag>(e);
