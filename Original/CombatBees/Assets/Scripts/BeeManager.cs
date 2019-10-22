@@ -317,6 +317,8 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         behaviour.TeamRepulsion = teamRepulsion;
         behaviour.FlightJitter = flightJitter;
         behaviour.Damping = damping;
+        behaviour.ChaseForce = chaseForce;
+        behaviour.GrabDistance = grabDistance;
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
