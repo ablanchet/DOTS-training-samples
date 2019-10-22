@@ -18,7 +18,7 @@ public class BeeBehaviour : JobComponentSystem
     public float FlightJitter;
     public float Damping;
     public Unity.Mathematics.Random rand;
-    
+
 
     [BurstCompile]
     struct BeeBehaviourJob : IJobForEach<Translation, Velocity, TargetEntity>
@@ -39,16 +39,17 @@ public class BeeBehaviour : JobComponentSystem
 
         public void Execute([ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref TargetEntity c2)
         {
+            //Jitter & Damping
             float3 JitterVector = rand.NextFloat3(-1f, 1f);
-            JitterVector = new float3(rand.NextFloat(-1, 1), rand.NextFloat(-1, 1), rand.NextFloat(-1, 1));
             float JitterLength = sqrt(JitterVector.x * JitterVector.x + JitterVector.y * JitterVector.y + JitterVector.z * JitterVector.z);
-            
+
             if (JitterLength != 0.0f)
                 JitterVector /= JitterLength;
 
             velocity.v += JitterVector * FlightJitter * math.min(DeltaTime, 0.1f);
             velocity.v *= (1f - Damping);
 
+            //Flocking
             Entity attractiveFriend = Friends[rand.NextInt(0, Friends.Length)];
             float3 delta = TranslationsFromEntity[attractiveFriend].Value - translation.Value;
             float dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
@@ -56,13 +57,45 @@ public class BeeBehaviour : JobComponentSystem
             {
                 velocity.v += delta * (TeamAttraction * DeltaTime / dist);
             }
-            
+
             Entity repellentFriend = Friends[rand.NextInt(0, Friends.Length)];
             delta = TranslationsFromEntity[repellentFriend].Value - translation.Value;
             dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
             if (dist > 0.1f)
             {
                 velocity.v -= delta * (TeamRepulsion * DeltaTime / dist);
+            }
+
+            //Chasing
+
+            //returning
+
+            //boundaries
+            if (System.Math.Abs(translation.Value.x) > Field.size.x * .5f)
+            {
+                translation.Value.x = (Field.size.x * .5f) * Mathf.Sign(translation.Value.x);
+                velocity.v.x *= -.5f;
+                velocity.v.y *= .8f;
+                velocity.v.z *= .8f;
+            }
+            if (System.Math.Abs(translation.Value.z) > Field.size.z * .5f)
+            {
+                translation.Value.z = (Field.size.z * .5f) * Mathf.Sign(translation.Value.z);
+                velocity.v.z *= -.5f;
+                velocity.v.x *= .8f;
+                velocity.v.y *= .8f;
+            }
+            float resourceModifier = 0f;
+            //            if (bee.isHoldingResource)
+            //            {
+            //                resourceModifier = ResourceManager.instance.resourceSize;
+            //            }
+            if (System.Math.Abs(translation.Value.y) > Field.size.y * .5f - resourceModifier)
+            {
+                translation.Value.y = (Field.size.y * .5f - resourceModifier) * Mathf.Sign(translation.Value.y);
+                velocity.v.y *= -.5f;
+                velocity.v.z *= .8f;
+                velocity.v.x *= .8f;
             }
         }
     }
@@ -93,8 +126,8 @@ public class BeeBehaviour : JobComponentSystem
         var TranslationsFromEntity = GetComponentDataFromEntity<Translation>(true);
 
         var Beehaviour0 = new BeeBehaviourJob();
-        Beehaviour0.Friends= team0Entities;
-        Beehaviour0.Enemies= team1Entities;
+        Beehaviour0.Friends = team0Entities;
+        Beehaviour0.Enemies = team1Entities;
         Beehaviour0.TranslationsFromEntity = TranslationsFromEntity;
         Beehaviour0.DeltaTime = Time.deltaTime;
         Beehaviour0.TeamAttraction = TeamAttraction;
@@ -103,7 +136,7 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.Damping = Damping;
         Beehaviour0.rand = rand;
         rand.NextFloat();
-            JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, allGathersHandle);
+        JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, allGathersHandle);
 
         var Beehaviour1 = new BeeBehaviourJob();
         Beehaviour1.Friends = team1Entities;
