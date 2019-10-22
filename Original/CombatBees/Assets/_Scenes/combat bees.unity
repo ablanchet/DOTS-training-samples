@@ -283,10 +283,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   beeMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  beePrefab0: {fileID: 3986760857535886565, guid: 00633ed4f3f82e441849a13aafda7e15,
-    type: 3}
-  beePrefab1: {fileID: 4694811806969051006, guid: 1fefe8bba319fcd47b53b62726ebf3e4,
-    type: 3}
+  beePrefab0: {fileID: 0}
+  beePrefab1: {fileID: 0}
   beeMaterial: {fileID: 2100000, guid: 618ad2bcfdace9e4aae0954675106cd3, type: 2}
   teamColors:
   - {r: 0.30882353, g: 0.4279919, b: 1, a: 1}
@@ -591,6 +589,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d53f2472ab3467a95beac5342783013, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ResourcePrefab: {fileID: 7149028951582796646, guid: e52aa095e30b44e4ba77b04626cd8c6e,
+    type: 3}
 --- !u!4 &950338056
 Transform:
   m_ObjectHideFlags: 0
@@ -599,7 +599,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 950338054}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -9.625, z: 0}
+  m_LocalPosition: {x: 0, y: -10, z: 0}
   m_LocalScale: {x: 80, y: 0, z: 30}
   m_Children: []
   m_Father: {fileID: 1179687051}
@@ -686,7 +686,7 @@ MonoBehaviour:
   snapStiffness: 0
   carryStiffness: 0
   spawnRate: 0.1
-  startResourceCount: 1000
+  startResourceCount: 3
 --- !u!114 &1223759895
 MonoBehaviour:
   m_ObjectHideFlags: 0
