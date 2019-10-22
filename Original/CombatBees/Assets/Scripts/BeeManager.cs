@@ -309,6 +309,14 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
                 }
             }
         }
+
+        //set up bee flight parameters
+        //spawn bees
+        BeeBehaviour behaviour = World.Active.GetExistingSystem<BeeBehaviour>();
+        behaviour.TeamAttraction = teamAttraction;
+        behaviour.TeamRepulsion = teamRepulsion;
+        behaviour.FlightJitter = flightJitter;
+        behaviour.Damping = damping;
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)

@@ -43,6 +43,9 @@ public class BeeSpawner : JobComponentSystem
             
             CommandBuffer.AddComponent<BeeSize>(index, spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize) });
             CommandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation() { Value = translation.Value });
+            CommandBuffer.AddComponent<Velocity>(index, spawnedEntity, new Velocity() { v = float3(0) });
+            CommandBuffer.AddComponent<TargetEntity>(index, spawnedEntity, new TargetEntity() );
+
             if (request.Team == 0)
             {
                 CommandBuffer.AddComponent<BeeTeam0>(index, spawnedEntity);
