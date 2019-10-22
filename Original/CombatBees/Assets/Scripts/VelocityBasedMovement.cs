@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 using static Unity.Mathematics.math;
 
 [UpdateAfter(typeof(BeeBehaviour))]
@@ -22,19 +23,18 @@ public class VelocityBasedMovement : JobComponentSystem
     {
         // Add fields here that your job needs to do its work.
         // For example,
-        //    public float deltaTime;
-        
-    
+        public float deltaTime;
+
         public void Execute(ref Translation translation, [ReadOnly] ref Velocity velocity)
         {
-            translation.Value += velocity.v;
+            translation.Value += velocity.v * deltaTime;
         }
     }
     
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         var job = new VelocityBasedMovementJob();
-        
+        job.deltaTime = Time.deltaTime;
         // Assign values to the fields on your job here, so that it has
         // everything it needs to do its work when it runs later.
         // For example,
