@@ -300,14 +300,14 @@ MonoBehaviour:
   teamAttraction: 5
   teamRepulsion: 4
   damping: 0.1
-  chaseForce: 50
+  chaseForce: 10
   carryForce: 25
   grabDistance: 0.5
   attackDistance: 4
   attackForce: 500
   hitDistance: 0.5
   maxSpawnSpeed: 75
-  startBeeCount: 100
+  startBeeCount: 2
 --- !u!4 &374635490
 Transform:
   m_ObjectHideFlags: 0
@@ -415,7 +415,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 5.669922, y: -5.5300293}
+  m_AnchoredPosition: {x: 5.669922, y: -5.5302734}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &669731901
@@ -597,7 +597,7 @@ MonoBehaviour:
   snapStiffness: 0
   carryStiffness: 0
   spawnRate: 0.1
-  startResourceCount: 100
+  startResourceCount: 1
 --- !u!114 &1223759895
 MonoBehaviour:
   m_ObjectHideFlags: 0

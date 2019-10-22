@@ -291,6 +291,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         spawner.BeePrototypes[1] = conversionSystem.GetPrimaryEntity(beePrefab1);
         spawner.maxBeeSize = maxBeeSize;
         spawner.minBeeSize = minBeeSize;
+		spawner.chaseForce = chaseForce;
 
         int[] TeamSizes = new int[2] { startBeeCount - startBeeCount / 2, startBeeCount / 2 };
 

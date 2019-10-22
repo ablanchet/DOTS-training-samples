@@ -15,6 +15,8 @@ public class BeeSpawner : JobComponentSystem
     public NativeArray<Entity> BeePrototypes;
     public float minBeeSize;
     public float maxBeeSize;
+    public float chaseForce;
+    public float grabDistance;
     public uint RandSeed;
 
     // This declares a new kind of job, which is a unit of work to do.
@@ -34,6 +36,8 @@ public class BeeSpawner : JobComponentSystem
         public NativeArray<Entity> BeePrototypes;
         public float minBeeSize;
         public float maxBeeSize;
+        public float chaseForce;
+        public float grabDistance;
         public Unity.Mathematics.Random rand;
 
         public void Execute(Entity entity, int index, [ReadOnly]ref Translation translation, [ReadOnly]ref BeeSpawnRequest request)
@@ -42,6 +46,8 @@ public class BeeSpawner : JobComponentSystem
             spawnedEntity = CommandBuffer.Instantiate(index, BeePrototypes[request.Team]);
             
             CommandBuffer.AddComponent<BeeSize>(index, spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize) });
+            CommandBuffer.AddComponent<FlightData>(index, spawnedEntity, new FlightData { chaseForce = chaseForce, grabDistance = grabDistance });
+            CommandBuffer.AddComponent<FlightTarget>(index, spawnedEntity, new FlightTarget());
             CommandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation() { Value = translation.Value });
             if (request.Team == 0)
             {
@@ -61,6 +67,8 @@ public class BeeSpawner : JobComponentSystem
         job.BeePrototypes = BeePrototypes;
         job.minBeeSize = minBeeSize;
         job.maxBeeSize = maxBeeSize;
+        job.chaseForce = chaseForce;
+        job.grabDistance = grabDistance;
         job.rand = new Unity.Mathematics.Random(RandSeed++);
 
         // Now that the job is set up, schedule it to be run. 

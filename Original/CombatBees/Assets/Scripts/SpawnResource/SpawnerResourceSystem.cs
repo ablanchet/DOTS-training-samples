@@ -20,6 +20,7 @@ public class SpawnerResourceSystem : ComponentSystem
                 var instance = PostUpdateCommands.Instantiate(componentData.ResourcePrefab);
                 PostUpdateCommands.SetComponent(instance, new Translation { Value = pos });
                 PostUpdateCommands.AddComponent(instance, new ResourceFreeFallTag());
+                PostUpdateCommands.AddComponent(instance, new ResourceData { held = false });
             }
 
             PostUpdateCommands.RemoveComponent<SpawnerResourceOnStartTag>(e);
