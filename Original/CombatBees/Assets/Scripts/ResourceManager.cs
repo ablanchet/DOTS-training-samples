@@ -66,10 +66,10 @@ public class ResourceManager : MonoBehaviour {
 		SpawnResource(pos);
 	}
 	void SpawnResource(Vector3 pos) {
-		Resource resource = new Resource(pos);
+		//Resource resource = new Resource(pos);
 
-		resources.Add(resource);
-		matrices.Add(Matrix4x4.identity);
+		//resources.Add(resource);
+		//matrices.Add(Matrix4x4.identity);
 	}
 	void DeleteResource(Resource resource) {
 		resource.dead = true;
@@ -100,16 +100,20 @@ public class ResourceManager : MonoBehaviour {
 		}
 	}
 
-	void Update() {
-		if (resources.Count < 1000 && MouseRaycaster.isMouseTouchingField) {
-			if (Input.GetKey(KeyCode.Mouse0)) {
-				spawnTimer += Time.deltaTime;
-				while (spawnTimer > 1f/spawnRate) {
-					spawnTimer -= 1f/spawnRate;
-					SpawnResource(MouseRaycaster.worldMousePosition);
-				}
-			}
-		}
+	void Update()
+    {
+        if (resources.Count < 1000 && MouseRaycaster.isMouseTouchingField)
+        {
+            if (Input.GetKey(KeyCode.Mouse0))
+            {
+                spawnTimer += Time.deltaTime;
+                while (spawnTimer > 1f / spawnRate)
+                {
+                    spawnTimer -= 1f / spawnRate;
+                    SpawnResource(MouseRaycaster.worldMousePosition);
+                }
+            }
+        }
 
 		for (int i=0;i<resources.Count;i++) {
 			Resource resource = resources[i];
