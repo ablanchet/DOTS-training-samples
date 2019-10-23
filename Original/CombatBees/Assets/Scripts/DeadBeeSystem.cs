@@ -38,9 +38,7 @@ public class DeadBeeSystem : ComponentSystem
                     velocity.v *= 0.5f;
                     ParticleManager.SpawnParticle(translation.Value, ParticleType.Blood, velocity.v * .35f, 2f, 6);
                     death.FirstUpdateDone = true;
-                    death.DeathTimer = 1;
                 }
-
 
                 if (UnityEngine.Random.value < (death.DeathTimer - .5f) * .5f)
                 {
@@ -48,6 +46,12 @@ public class DeadBeeSystem : ComponentSystem
                 }
 
                 velocity.v.y += Field.gravity * deltaTime;
+
+                if (translation.Value.y < (-Field.size.y/2))
+                {
+                    velocity.v = float3(0);
+                }
+
                 death.DeathTimer -= deltaTime;
 
                 if (death.DeathTimer < 0f)
