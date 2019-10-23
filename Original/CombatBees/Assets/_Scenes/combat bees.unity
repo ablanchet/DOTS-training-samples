@@ -296,7 +296,7 @@ MonoBehaviour:
   speedStretch: 0.2
   rotationStiffness: 5
   aggression: 0.5
-  flightJitter: 10
+  flightJitter: 200
   teamAttraction: 5
   teamRepulsion: 4
   damping: 0.1
