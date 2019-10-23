@@ -28,7 +28,7 @@ public class BeeBehaviour : JobComponentSystem
 
     //burst is not currently friendly with the command buffer
     //[BurstCompile]
-    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeState>
+    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeSize>
     {
         [ReadOnly]
         public NativeArray<Entity> Friends;
@@ -49,7 +49,7 @@ public class BeeBehaviour : JobComponentSystem
         public float3 FieldSize;
         public EntityCommandBuffer.Concurrent CommandBuffer;
 
-        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target, ref BeeState beeState)
+        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target, ref BeeSize beeSize)
         {
             //Jitter & Damping
             {
@@ -114,9 +114,11 @@ public class BeeBehaviour : JobComponentSystem
                     }
                     else
                     {
-                        beeState.Attacking = true;
+                        beeSize.Attacking = true;
                         velocity.v += targetDelta * (AttackForce * DeltaTime / Mathf.Sqrt(sqrDist));
-                        CommandBuffer.AddComponent<Death>(index, target.entity, new Death() { DeathTimer = 1, FirstUpdateDone = false }); ;
+
+                        Entity DeathMessage = CommandBuffer.CreateEntity(index);
+                        CommandBuffer.AddComponent<PendingDeath>(index, DeathMessage, new PendingDeath() { EntityThatWillDie = target.entity });
                     }
                 }
             }
@@ -224,8 +226,8 @@ public class BeeBehaviour : JobComponentSystem
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
         BeeTeam0GatherQuery = GetEntityQuery(typeof(BeeTeam0), typeof(Translation));
         BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
-        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>(), ComponentType.Exclude<Death>());
-        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>(), ComponentType.Exclude<Death>());
+        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
+        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
         rand = new Unity.Mathematics.Random(3);
     }
 }

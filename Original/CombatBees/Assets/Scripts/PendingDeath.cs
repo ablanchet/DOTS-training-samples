@@ -4,8 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 [Serializable]
-public struct BeeState : IComponentData
+public struct PendingDeath : IComponentData
 {
-    public bool Attacking;
-    public bool Dead;    
+    public Entity EntityThatWillDie;    
 }

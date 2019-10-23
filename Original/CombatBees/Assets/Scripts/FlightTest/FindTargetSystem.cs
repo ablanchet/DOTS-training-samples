@@ -17,8 +17,8 @@ public class FindTargetSystem : ComponentSystem
         resourceQuery = GetEntityQuery(
             ComponentType.ReadOnly<ResourceData>()
         );
-        Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>());
-        Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>());
+        Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>());
+        Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>());
     }
     protected override void OnUpdate()
     {
@@ -27,7 +27,6 @@ public class FindTargetSystem : ComponentSystem
         // between ComponentSystem Update (logic) and ComponentData (data).
         // There is no update logic on the individual ComponentData.
         var resourcesData = GetComponentDataFromEntity<ResourceData>();
-        var beeStateFromEntity = GetComponentDataFromEntity<BeeState>();
 
         using (NativeArray<Entity> resourcesList = resourceQuery.ToEntityArray(Allocator.TempJob))
         using (NativeArray<Entity> team0List = Team0Query.ToEntityArray(Allocator.TempJob))
@@ -42,11 +41,14 @@ public class FindTargetSystem : ComponentSystem
                         {
                             //Aggro - find a victim
                             NativeArray<Entity> enemyList = (EntityManager.HasComponent<BeeTeam0>(e)) ? team1List : team0List;
-                            Entity targetCandidate = enemyList[UnityEngine.Random.Range(0, enemyList.Length)];
-                            //need to avoid targeting dead beed
-                            PostUpdateCommands.SetComponent(e, new FlightTarget { entity = targetCandidate, isResource = false });
+                            if (enemyList.Length > 0)
+                            {
+                                Entity targetCandidate = enemyList[UnityEngine.Random.Range(0, enemyList.Length)];
+                                //need to avoid targeting dead beed
+                                PostUpdateCommands.SetComponent(e, new FlightTarget { entity = targetCandidate, isResource = false });
+                            }
                         }
-                        else
+                        else if (resourcesList.Length >0 )
                         {
                             // Get random resource
                             var resourceEntity = resourcesList[UnityEngine.Random.Range(0, resourcesList.Length)];
@@ -71,7 +73,7 @@ public class FindTargetSystem : ComponentSystem
                         }
                         else
                         {
-                            if (beeStateFromEntity[target.entity].Dead)
+                            if (EntityManager.HasComponent<Death>(target.entity) || !EntityManager.HasComponent<Translation>(target.entity))
                             {
                                 target.entity = Entity.Null;
                             }

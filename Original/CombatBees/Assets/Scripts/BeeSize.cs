@@ -7,6 +7,7 @@ using Unity.Mathematics;
 public struct BeeSize : IComponentData
 {
     public float Size;
+    public bool Attacking; //used to change the bee appearance during an attack
     // Add fields to your component here. Remember that:
     //
     // * A component itself is for storing data and doesn't 'do' anything.
