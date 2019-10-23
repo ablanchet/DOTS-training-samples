@@ -300,14 +300,14 @@ MonoBehaviour:
   teamAttraction: 5
   teamRepulsion: 4
   damping: 0.1
-  chaseForce: 150
-  carryForce: 75
+  chaseForce: 50
+  carryForce: 25
   grabDistance: 0.5
   attackDistance: 4
   attackForce: 500
   hitDistance: 0.5
   maxSpawnSpeed: 75
-  startBeeCount: 50
+  startBeeCount: 100
 --- !u!4 &374635490
 Transform:
   m_ObjectHideFlags: 0
