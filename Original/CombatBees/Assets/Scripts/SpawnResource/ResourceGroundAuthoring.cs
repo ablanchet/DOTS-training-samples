@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -19,8 +20,14 @@ public class ResourceGroundAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         var resourceSize = ResourcePrefab.transform.localScale.x;
         var scale = dstManager.GetComponentData<NonUniformScale>(entity);
+        var translation = dstManager.GetComponentData<Translation>(entity);
 
-        dstManager.AddComponentData(entity, new ResourceGroundTag());
+        dstManager.AddComponentData(entity, new ResourceGround
+        {
+            scale = scale.Value,
+            xzMaxBoundaries = new float2(translation.Value.x + scale.Value.x / 2, translation.Value.z + scale.Value.z / 2),
+            groundHeight = translation.Value.y
+        });
 
         var grid = Vector2Int.RoundToInt(new Vector2(scale.Value.x, scale.Value.z) / resourceSize);
 
@@ -37,8 +44,11 @@ public class ResourceGroundAuthoring : MonoBehaviour, IConvertGameObjectToEntity
     }
 }
 
-public struct ResourceGroundTag : IComponentData
+public struct ResourceGround : IComponentData
 {
+    public float2 xzMaxBoundaries;
+    public float3 scale;
+    public float groundHeight;
 }
 
 public struct GridTag : IComponentData

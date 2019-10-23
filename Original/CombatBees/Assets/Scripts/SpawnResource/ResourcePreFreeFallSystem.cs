@@ -23,11 +23,8 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
     {
         var config = GetSingleton<ResourceSpawnerConfiguration>();
 
-        var ground = GetSingletonEntity<ResourceGroundTag>();
-        var groundTranslation = EntityManager.GetComponentData<Translation>(ground).Value;
-        var groundScale = EntityManager.GetComponentData<NonUniformScale>(ground).Value;
-        var groundBoundaries = new float2(groundTranslation.x + groundScale.x / 2, groundTranslation.z + groundScale.z / 2);
-        var resourcesPerRow = (int)math.round(groundScale.x / config.resourceScale.x);
+        var ground = GetSingleton<ResourceGround>();
+        var resourcesPerRow = (int)math.round(ground.scale.x / config.resourceScale.x);
 
         var gridEntity = GetSingletonEntity<GridTag>();
         var indexedCells = EntityManager.GetBuffer<IndexedCell>(gridEntity).ToNativeArray(Allocator.TempJob);
@@ -37,7 +34,7 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
             commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             resourceSize = config.resourceScale.x,
             indexedCells = indexedCells,
-            groundBoundaries = groundBoundaries,
+            groundBoundaries = ground.xzMaxBoundaries,
             resourcesPerRow = resourcesPerRow
         }.Schedule(m_Query, inputDeps);
 
