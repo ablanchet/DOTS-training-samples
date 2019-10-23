@@ -15,9 +15,14 @@ public class ResourceFlightSystem : ComponentSystem
         Entities.ForEach((Entity e, ref FollowEntity follow, ref Translation translation, ref NonUniformScale scale) =>
         {
             if (follow.target != Entity.Null) {
-                var targetTranslation = EntityManager.GetComponentData<Translation>(follow.target);
-                var targetSize = EntityManager.GetComponentData<BeeSize>(follow.target).Size;
-                translation.Value = new float3(targetTranslation.Value.x, targetTranslation.Value.y - targetSize - scale.Value.y, targetTranslation.Value.z);
+                if (EntityManager.HasComponent<Death>(follow.target)) {
+                    PostUpdateCommands.RemoveComponent<FollowEntity>(e);
+                    PostUpdateCommands.AddComponent<ResourceFallingTag>(e);
+                } else {
+                    var targetTranslation = EntityManager.GetComponentData<Translation>(follow.target);
+                    var targetSize = EntityManager.GetComponentData<BeeSize>(follow.target).Size;
+                    translation.Value = new float3(targetTranslation.Value.x, targetTranslation.Value.y - targetSize - scale.Value.y, targetTranslation.Value.z);
+                }
             }
         });
     }

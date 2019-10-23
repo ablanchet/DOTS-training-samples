@@ -101,9 +101,17 @@ public class FindTargetSystem : JobComponentSystem
                         {
                             var resData = resourcesData[target.entity];
 
-                            if (resData.held)
+                            if (resData.held && resData.holder != e)
                             {
-                                PostUpdateCommands.SetComponent(e, new FlightTarget());
+                                // Check if the holder is an enemy
+                                bool isEnemy = (EntityManager.HasComponent<BeeTeam0>(e) && EntityManager.HasComponent<BeeTeam1>(resData.holder)) || (EntityManager.HasComponent<BeeTeam1>(e) && EntityManager.HasComponent<BeeTeam0>(resData.holder));
+                                if (isEnemy) {
+                                    target.entity = resData.holder;
+                                    target.isResource = false;
+                                } else {
+                                    target.entity = Entity.Null;
+                                    target.isResource = false;
+                                }
                             }
                         }
                         else
