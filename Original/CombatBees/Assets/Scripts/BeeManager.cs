@@ -318,6 +318,8 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         behaviour.Damping = damping;
         behaviour.ChaseForce = chaseForce;
         behaviour.GrabDistance = grabDistance;
+        behaviour.AttackForce = attackForce;
+        behaviour.AttackDistance = attackDistance;
 
         //set up target finding
         FindTargetSystem findTargetSystem = World.Active.GetOrCreateSystem<FindTargetSystem>();

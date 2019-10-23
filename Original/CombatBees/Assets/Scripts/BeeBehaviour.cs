@@ -9,6 +9,8 @@ using static Unity.Mathematics.math;
 
 public class BeeBehaviour : JobComponentSystem
 {
+    BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+
     EntityQuery BeeTeam0GatherQuery;
     EntityQuery BeeTeam1GatherQuery;
     EntityQuery BeeTeam0UpdateQuery;
@@ -18,13 +20,15 @@ public class BeeBehaviour : JobComponentSystem
     public float FlightJitter;
     public float Damping;
     public float ChaseForce;
+    public float AttackForce;
     public float GrabDistance;
     public float AttackDistance;
     public Unity.Mathematics.Random rand;
 
 
-    [BurstCompile]
-    struct BeeBehaviourJob : IJobForEach<Translation, Velocity, FlightTarget, BeeState>
+    //burst is not currently friendly with the command buffer
+    //[BurstCompile]
+    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeState>
     {
         [ReadOnly]
         public NativeArray<Entity> Friends;
@@ -41,9 +45,11 @@ public class BeeBehaviour : JobComponentSystem
         public float GrabDistance;
         public float AttackDistance;
         public float ChaseForce;
+        public float AttackForce;
         public float3 FieldSize;
+        public EntityCommandBuffer.Concurrent CommandBuffer;
 
-        public void Execute([ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target, ref BeeState beeState)
+        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target, ref BeeState beeState)
         {
             //Jitter & Damping
             {
@@ -108,17 +114,9 @@ public class BeeBehaviour : JobComponentSystem
                     }
                     else
                     {
-                        throw new System.NotImplementedException();
-
-                        //bee.isAttacking = true;
-                        //bee.velocity += delta * (attackForce * deltaTime / Mathf.Sqrt(sqrDist));
-                        //if (sqrDist < hitDistance * hitDistance)
-                        //{
-                        //    ParticleManager.SpawnParticle(bee.enemyTarget.position, ParticleType.Blood, bee.velocity * .35f, 2f, 6);
-                        //    bee.enemyTarget.dead = true;
-                        //    bee.enemyTarget.velocity *= .5f;
-                        //    bee.enemyTarget = null;
-                        //}
+                        beeState.Attacking = true;
+                        velocity.v += targetDelta * (AttackForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                        CommandBuffer.AddComponent<Death>(index, target.entity, new Death() { DeathTimer = 1, FirstUpdateDone = false }); ;
                     }
                 }
             }
@@ -194,11 +192,15 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.Damping = Damping;
         Beehaviour0.GrabDistance = GrabDistance;
             Beehaviour0.AttackDistance = AttackDistance;
-            Beehaviour0.ChaseForce = ChaseForce;
+        Beehaviour0.ChaseForce = ChaseForce;
+        Beehaviour0.AttackForce = AttackForce;
         Beehaviour0.FieldSize = Field.size;
         Beehaviour0.rand = rand;
         rand.NextFloat();
+        Beehaviour0.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
+
         JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, allGathersHandle);
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour0Handle);
 
         var Beehaviour1 = Beehaviour0;
         Beehaviour1.Friends = team1Entities;
@@ -206,6 +208,7 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour1.rand = rand;
         rand.NextFloat();
         JobHandle BeeHaviour1Handle = Beehaviour1.Schedule(BeeTeam1UpdateQuery, BeeHaviour0Handle);  //this doesn't actually need to wait for BeeHaviour0Handle, but safety is confused about whether there might be some query overlap
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour1Handle);
 
         var cleanupJob = new CleanupJob();
         cleanupJob.Entities0 = team0Entities;
@@ -218,10 +221,11 @@ public class BeeBehaviour : JobComponentSystem
     protected override void OnCreate()
     {
         base.OnCreate();
+        m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
         BeeTeam0GatherQuery = GetEntityQuery(typeof(BeeTeam0), typeof(Translation));
         BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
-        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>());
-        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>());
+        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>(), ComponentType.Exclude<Death>());
+        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>(), ComponentType.Exclude<Death>());
         rand = new Unity.Mathematics.Random(3);
     }
 }
