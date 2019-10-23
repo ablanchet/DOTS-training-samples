@@ -5,7 +5,6 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
 
-[UpdateAfter(typeof(SpawnerResourceSystem))]
 [UpdateAfter(typeof(AutoResourceSpawnerSystem))]
 public class FindTargetSystem : JobComponentSystem
 {
@@ -22,13 +21,47 @@ public class FindTargetSystem : JobComponentSystem
         Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>());
         Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>());
     }
+
+    struct TargetUpdateJob : IJobForEachWithEntity<FlightTarget>
+    {
+        public ComponentDataFromEntity<ResourceData> resourcesData;
+        public ComponentDataFromEntity<Death> deathFromEntity;
+
+        public void Execute(Entity entity, int index, ref FlightTarget flightTarget)
+        {
+            if (flightTarget.entity != Entity.Null)
+            {
+                if (flightTarget.isResource)
+                {
+                    if (!resourcesData.Exists(flightTarget.entity) || resourcesData[flightTarget.entity].held)
+                    {
+                        flightTarget.entity = Entity.Null;
+                    }
+                }
+                else
+                {
+                    if (!deathFromEntity.Exists(flightTarget.entity) || deathFromEntity.HasComponent(flightTarget.entity))
+                    {
+                        flightTarget.entity = Entity.Null;
+                    }
+                }
+
+
+            }
+        }
+    }
+
+
+
+
     protected override void OnUpdate()
     {
+
         // Entities.ForEach processes each set of ComponentData on the main thread. This is not the recommended
         // method for best performance. However, we start with it here to demonstrate the clearer separation
         // between ComponentSystem Update (logic) and ComponentData (data).
         // There is no update logic on the individual ComponentData.
-        var resourcesData = GetComponentDataFromEntity<ResourceData>();
+        ComponentDataFromEntity<ResourceData> resourcesData = GetComponentDataFromEntity<ResourceData>();
 
         using (NativeArray<Entity> resourcesList = resourceQuery.ToEntityArray(Allocator.TempJob))
         using (NativeArray<Entity> team0List = Team0Query.ToEntityArray(Allocator.TempJob))
