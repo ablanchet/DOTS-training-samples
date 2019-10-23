@@ -20,6 +20,14 @@ public class DeadBeeSystem : ComponentSystem
             Entity target = p.EntityThatWillDie;
             if (!manager.HasComponent<Death>(target) && manager.Exists(target))
             {
+                FlightTarget flightTarget = manager.GetComponentData<FlightTarget>(target);
+
+                if (flightTarget.entity != Entity.Null && flightTarget.isResource) {
+                    manager.RemoveComponent<FollowEntity>(flightTarget.entity);
+                    manager.AddComponent<ResourceFallingTag>(flightTarget.entity);
+                }
+
+                manager.SetComponentData<FlightTarget>(target, new FlightTarget());
                 manager.AddComponent<Death>(target);
                 manager.SetComponentData<Death>(target, new Death() { FirstUpdateDone = false, DeathTimer = 1 });
             }
