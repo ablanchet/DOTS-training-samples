@@ -21,8 +21,8 @@ public class AutoResourceSpawnerSystem : ComponentSystem
                 {
                     var pos = random.NextFloat3(minGridPos, maxGridPos);
 
-                    var spannedX = (math.round(pos.x / resourceSize) * resourceSize) + (resourceSize / 2);
-                    var spannedZ = (math.round(pos.z / resourceSize) * resourceSize) - (resourceSize / 2);
+                    var spannedX = (math.round(pos.x / resourceSize) * resourceSize) + math.sign(pos.x) * -1 * (resourceSize / 2);
+                    var spannedZ = (math.round(pos.z / resourceSize) * resourceSize) + math.sign(pos.z) * -1 * (resourceSize / 2);
 
                     var instance = PostUpdateCommands.Instantiate(spawnerConfiguration.resourcePrefab);
                     PostUpdateCommands.SetComponent(instance, new Translation { Value = new float3(spannedX, pos.y, spannedZ) });
