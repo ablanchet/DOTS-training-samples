@@ -287,8 +287,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
 
         //spawn bees
         BeeSpawner spawner = World.Active.GetExistingSystem<BeeSpawner>();
-        spawner.BeePrototypes[0] = conversionSystem.GetPrimaryEntity(beePrefab0);
-        spawner.BeePrototypes[1] = conversionSystem.GetPrimaryEntity(beePrefab1);
+        spawner.SetPrototypes(conversionSystem.GetPrimaryEntity(beePrefab0), conversionSystem.GetPrimaryEntity(beePrefab1));
         spawner.maxBeeSize = maxBeeSize;
         spawner.minBeeSize = minBeeSize;
         spawner.maxSpawnSpeed = maxSpawnSpeed;

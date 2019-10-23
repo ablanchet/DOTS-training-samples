@@ -10,11 +10,33 @@ using UnityEngine;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public class BeeSpawner : ComponentSystem
 {
-    public NativeArray<Entity> BeePrototypes;
+    private NativeArray<Entity> BeePrototypes;
     public float minBeeSize;
     public float maxBeeSize;
     public float maxSpawnSpeed;
     private Unity.Mathematics.Random rand;
+
+
+    public void SetPrototypes(Entity Bee0, Entity Bee1)
+    {
+        BeePrototypes[0] = Bee0;
+        BeePrototypes[1] = Bee1;
+
+        EntityManager manager = World.Active.EntityManager;
+
+            manager.AddComponent<BeeTeam0>(Bee0);
+            manager.AddComponent<BeeTeam1>(Bee1);
+
+        foreach (Entity bee in BeePrototypes)
+        {
+
+            manager.AddComponent<BeeSize>(bee);
+            manager.AddComponent<Velocity>(bee);
+            manager.AddComponent<FlightTarget>(bee);
+            manager.AddComponent<NonUniformScale>(bee);
+        }
+
+    }
 
     protected override void OnUpdate()
     {
@@ -30,24 +52,11 @@ public class BeeSpawner : ComponentSystem
             }
 
             Entity spawnedEntity = manager.Instantiate(BeePrototypes[request.Team]);
-            manager.AddComponent<BeeSize>(spawnedEntity);
             manager.SetComponentData<BeeSize>(spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize) });
             manager.SetComponentData<Translation>(spawnedEntity, new Translation() { Value = translation.Value });
 
-            manager.AddComponent<Velocity>(spawnedEntity);
             manager.SetComponentData<Velocity>(spawnedEntity, new Velocity() { v = startingVelocity });
-            manager.AddComponent<FlightTarget>(spawnedEntity);
-            manager.AddComponent<NonUniformScale>(spawnedEntity);
-
-            if (request.Team == 0)
-            {
-                manager.AddComponent<BeeTeam0>(spawnedEntity);
-            }
-            else
-            {
-                manager.AddComponent<BeeTeam1>(spawnedEntity);
-            }
-        });
+});
 
         manager.DestroyEntity(GetEntityQuery(typeof(BeeSpawnRequest)));
     }
