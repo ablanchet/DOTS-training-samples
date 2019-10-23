@@ -12,6 +12,7 @@ public class FindTargetSystem : JobComponentSystem
     private EntityQuery Team0Query;
     private EntityQuery Team1Query;
     public float Aggression;
+    public Unity.Mathematics.Random rand;
 
     protected override void OnCreate()
     {
@@ -20,20 +21,67 @@ public class FindTargetSystem : JobComponentSystem
         );
         Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>());
         Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>());
+        rand = new Unity.Mathematics.Random(3);
+    }
+
+    struct CleanupJob : IJob
+    {
+        [DeallocateOnJobCompletion, ReadOnly]
+        public NativeArray<Entity> array0;
+        [DeallocateOnJobCompletion, ReadOnly]
+        public NativeArray<Entity> array1;
+        [DeallocateOnJobCompletion, ReadOnly]
+        public NativeArray<Entity> array2;
+
+        public void Execute()
+        {
+        }
     }
 
     struct TargetUpdateJob : IJobForEachWithEntity<FlightTarget>
     {
-        public ComponentDataFromEntity<ResourceData> resourcesData;
+        [ReadOnly]
+        public ComponentDataFromEntity<ResourceData> resourcesDataFromEntity;
+        [ReadOnly]
         public ComponentDataFromEntity<Death> deathFromEntity;
+        [ReadOnly]
+        public NativeArray<Entity> ResourceList;
+        [ReadOnly]
+        public NativeArray<Entity> EnemyList;
+        public float Aggression;
+        public Unity.Mathematics.Random rand;
 
         public void Execute(Entity entity, int index, ref FlightTarget flightTarget)
         {
+            if (flightTarget.entity == Entity.Null)
+            {
+                if (rand.NextFloat() < Aggression)
+                {
+                    if (EnemyList.Length > 0)
+                    {
+                        flightTarget.entity = EnemyList[rand.NextInt(0, EnemyList.Length)];
+                        flightTarget.isResource = false;
+                    }
+                }
+                else
+                {
+                    if (ResourceList.Length > 0)
+                    {
+                        Entity possibleTarget = ResourceList[rand.NextInt(0, ResourceList.Length)];
+                        if (!resourcesDataFromEntity[possibleTarget].held)
+                        {
+                            flightTarget.entity = possibleTarget;
+                            flightTarget.isResource = true;
+                        }
+                    }
+                }
+            }
+
             if (flightTarget.entity != Entity.Null)
             {
                 if (flightTarget.isResource)
                 {
-                    if (!resourcesData.Exists(flightTarget.entity) || resourcesData[flightTarget.entity].held)
+                    if (!resourcesDataFromEntity.Exists(flightTarget.entity) || resourcesDataFromEntity[flightTarget.entity].held)
                     {
                         flightTarget.entity = Entity.Null;
                     }
@@ -46,87 +94,42 @@ public class FindTargetSystem : JobComponentSystem
                     }
                 }
 
-
             }
         }
     }
 
-
-
-
-    protected override void OnUpdate()
-    {
-
-        // Entities.ForEach processes each set of ComponentData on the main thread. This is not the recommended
-        // method for best performance. However, we start with it here to demonstrate the clearer separation
-        // between ComponentSystem Update (logic) and ComponentData (data).
-        // There is no update logic on the individual ComponentData.
-        ComponentDataFromEntity<ResourceData> resourcesData = GetComponentDataFromEntity<ResourceData>();
-
-        using (NativeArray<Entity> resourcesList = resourceQuery.ToEntityArray(Allocator.TempJob))
-        using (NativeArray<Entity> team0List = Team0Query.ToEntityArray(Allocator.TempJob))
-        using (NativeArray<Entity> team1List = Team1Query.ToEntityArray(Allocator.TempJob))
-        {
-
-            Entities.ForEach((Entity e, ref FlightTarget target) =>
-                {
-                    if (target.entity == Entity.Null)
-                    {
-                        if (UnityEngine.Random.Range(0.0f, 1.0f) < Aggression)
-                        {
-                            //Aggro - find a victim
-                            NativeArray<Entity> enemyList = (EntityManager.HasComponent<BeeTeam0>(e)) ? team1List : team0List;
-                            if (enemyList.Length > 0)
-                            {
-                                Entity targetCandidate = enemyList[UnityEngine.Random.Range(0, enemyList.Length)];
-                                //need to avoid targeting dead beed
-                                PostUpdateCommands.SetComponent(e, new FlightTarget { entity = targetCandidate, isResource = false });
-                            }
-                        }
-                        else if (resourcesList.Length >0 )
-                        {
-                            // Get random resource
-                            var resourceEntity = resourcesList[UnityEngine.Random.Range(0, resourcesList.Length)];
-                            var resData = resourcesData[resourceEntity];
-                            if (!resData.held)
-                            {
-                                PostUpdateCommands.SetComponent(e, new FlightTarget { entity = resourceEntity, isResource = true });
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // If resoruce, check if its still free
-                        if (target.isResource)
-                        {
-                            var resData = resourcesData[target.entity];
-
-                            if (resData.held && resData.holder != e)
-                            {
-                                // Check if the holder is an enemy
-                                bool isEnemy = (EntityManager.HasComponent<BeeTeam0>(e) && EntityManager.HasComponent<BeeTeam1>(resData.holder)) || (EntityManager.HasComponent<BeeTeam1>(e) && EntityManager.HasComponent<BeeTeam0>(resData.holder));
-                                if (isEnemy) {
-                                    target.entity = resData.holder;
-                                    target.isResource = false;
-                                } else {
-                                    target.entity = Entity.Null;
-                                    target.isResource = false;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (EntityManager.HasComponent<Death>(target.entity) || !EntityManager.HasComponent<Translation>(target.entity))
-                            {
-                                target.entity = Entity.Null;
-                            }
-                        }
-                    }
-                });
-        }
-    }
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        throw new System.NotImplementedException();
+        NativeArray<Entity> ResourceEntities;
+        NativeArray<Entity> Team0Entities;
+        NativeArray<Entity> Team1Entities;
+
+        JobHandle resourceGatherHandle;
+        ResourceEntities = resourceQuery.ToEntityArray(Allocator.TempJob, out resourceGatherHandle);
+        JobHandle team0GatherHandle;
+        Team0Entities = resourceQuery.ToEntityArray(Allocator.TempJob, out team0GatherHandle);
+        JobHandle team1GatherHandle;
+        Team1Entities = resourceQuery.ToEntityArray(Allocator.TempJob, out team1GatherHandle);
+
+        TargetUpdateJob targetUpdateJob0 = new TargetUpdateJob();
+        targetUpdateJob0.rand = rand;
+        rand.NextFloat();
+        targetUpdateJob0.EnemyList = Team1Entities;
+        targetUpdateJob0.ResourceList = ResourceEntities;
+        targetUpdateJob0.deathFromEntity = GetComponentDataFromEntity<Death>();
+        targetUpdateJob0.resourcesDataFromEntity = GetComponentDataFromEntity<ResourceData>();
+        targetUpdateJob0.Aggression = Aggression;
+        JobHandle TargetUpdate0Handle = targetUpdateJob0.Schedule(this, JobHandle.CombineDependencies(inputDeps, resourceGatherHandle, team1GatherHandle));
+
+        TargetUpdateJob targetUpdateJob1 = targetUpdateJob0;
+        targetUpdateJob1.EnemyList = Team0Entities;
+        JobHandle TargetUpdate1Handle = targetUpdateJob1.Schedule(this, JobHandle.CombineDependencies(TargetUpdate0Handle, team0GatherHandle));
+
+        CleanupJob cleanupJob = new CleanupJob();
+        cleanupJob.array0 = ResourceEntities;
+        cleanupJob.array1 = Team0Entities;
+        cleanupJob.array2 = Team1Entities;
+
+        return cleanupJob.Schedule(TargetUpdate1Handle);
     }
 }
