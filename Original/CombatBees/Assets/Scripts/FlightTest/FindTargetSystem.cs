@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Collections;
 
-[UpdateAfter(typeof(SpawnerResourceSystem))]
+[UpdateAfter(typeof(AutoResourceSpawnerSystem))]
 public class FindTargetSystem : ComponentSystem
 {
     private EntityQuery resourceQuery;
