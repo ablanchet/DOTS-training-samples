@@ -45,7 +45,6 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
         return handle;
     }
 
-//    [BurstCompile]
     struct SetTargetCellJob : IJobForEachWithEntity_EC<Translation>
     {
         public EntityCommandBuffer.Concurrent commandBuffer;
@@ -60,8 +59,9 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
             var xDistance = math.abs(t.Value.x - groundBoundaries.x);
             var zDistance = math.abs(t.Value.z - groundBoundaries.y);
 
-            var horizontalResourceCount = xDistance <= resourceSize ? 0 : math.round(xDistance / resourceSize) - 1;
-            var verticalResourceCount = zDistance <= resourceSize ? 0 : math.round(zDistance / resourceSize) - 1;
+            var horizontalResourceCount = xDistance <= resourceSize ? 0 : math.trunc(xDistance / resourceSize);
+            var verticalResourceCount = zDistance <= resourceSize ? 0 : math.trunc(zDistance / resourceSize);
+
             var cellIdx = (int)(verticalResourceCount * resourcesPerRow + horizontalResourceCount);
             var cellEntity = indexedCells[cellIdx].cellEntity;
 

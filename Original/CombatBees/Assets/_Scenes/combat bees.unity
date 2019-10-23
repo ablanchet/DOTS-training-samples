@@ -602,7 +602,7 @@ Transform:
   m_GameObject: {fileID: 950338054}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -10, z: 0}
-  m_LocalScale: {x: 80, y: 0, z: 30}
+  m_LocalScale: {x: 90, y: 0, z: 40}
   m_Children: []
   m_Father: {fileID: 1179687051}
   m_RootOrder: 1
@@ -685,7 +685,7 @@ MonoBehaviour:
   ResourcePrefab: {fileID: 7149028951582796646, guid: e52aa095e30b44e4ba77b04626cd8c6e,
     type: 3}
   SpawnRate: 10
-  startResourceCount: 500
+  startResourceCount: 1000
 --- !u!114 &1223759895
 MonoBehaviour:
   m_ObjectHideFlags: 0
