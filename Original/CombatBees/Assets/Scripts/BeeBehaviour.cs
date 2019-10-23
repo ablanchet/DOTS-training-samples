@@ -21,6 +21,7 @@ public class BeeBehaviour : JobComponentSystem
     public float Damping;
     public float ChaseForce;
     public float AttackForce;
+    public float CarryForce;
     public float GrabDistance;
     public float AttackDistance;
     public Unity.Mathematics.Random rand;
@@ -39,6 +40,7 @@ public class BeeBehaviour : JobComponentSystem
 
         [ReadOnly]
         public ComponentDataFromEntity<ResourceData> ResourcesDataFromEntity;
+        public float teamId;
         public Unity.Mathematics.Random rand;
         public float DeltaTime;
         public float TeamAttraction;
@@ -49,6 +51,7 @@ public class BeeBehaviour : JobComponentSystem
         public float AttackDistance;
         public float ChaseForce;
         public float AttackForce;
+        public float CarryForce;
         public float3 FieldSize;
         public EntityCommandBuffer.Concurrent CommandBuffer;
 
@@ -104,6 +107,16 @@ public class BeeBehaviour : JobComponentSystem
                         if (target.holding) 
                         {
                             // We are holding our target, fly back to base
+                            float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId,0f, translation.Value.z);
+						    float3 baseDelta = basePos - translation.Value;
+						    var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
+						    velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
+
+                            if (dist < 1f) {
+                                // Drop resource
+							    //resource.holder = null;
+							    //bee.resourceTarget = null;
+						    }
                         } 
                         else if (sqrDist > GrabDistance * GrabDistance) 
                         {
@@ -211,8 +224,10 @@ public class BeeBehaviour : JobComponentSystem
             Beehaviour0.AttackDistance = AttackDistance;
         Beehaviour0.ChaseForce = ChaseForce;
         Beehaviour0.AttackForce = AttackForce;
+        Beehaviour0.CarryForce = CarryForce;
         Beehaviour0.FieldSize = Field.size;
         Beehaviour0.rand = rand;
+        Beehaviour0.teamId = -1;
         rand.NextFloat();
         Beehaviour0.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
 
@@ -222,6 +237,7 @@ public class BeeBehaviour : JobComponentSystem
         var Beehaviour1 = Beehaviour0;
         Beehaviour1.Friends = team1Entities;
         Beehaviour1.Enemies = team0Entities;
+        Beehaviour1.teamId = 1;
         Beehaviour1.rand = rand;
         rand.NextFloat();
         JobHandle BeeHaviour1Handle = Beehaviour1.Schedule(BeeTeam1UpdateQuery, BeeHaviour0Handle);  //this doesn't actually need to wait for BeeHaviour0Handle, but safety is confused about whether there might be some query overlap

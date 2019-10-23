@@ -319,6 +319,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         behaviour.ChaseForce = chaseForce;
         behaviour.GrabDistance = grabDistance;
         behaviour.AttackForce = attackForce;
+		behaviour.CarryForce = carryForce;
         behaviour.AttackDistance = attackDistance;
 
         //set up target finding
