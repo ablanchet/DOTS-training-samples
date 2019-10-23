@@ -24,6 +24,7 @@ public class BeeBehaviour : JobComponentSystem
     public float CarryForce;
     public float GrabDistance;
     public float AttackDistance;
+    public float ResourceSize;
     public Unity.Mathematics.Random rand;
 
 
@@ -49,6 +50,7 @@ public class BeeBehaviour : JobComponentSystem
         public float Damping;
         public float GrabDistance;
         public float AttackDistance;
+        public float ResourceSize;
         public float ChaseForce;
         public float AttackForce;
         public float CarryForce;
@@ -89,6 +91,7 @@ public class BeeBehaviour : JobComponentSystem
             }
 
             //targetting resouce / enemy
+            beeSize.Attacking = false;
             if (target.entity != Entity.Null)
             {
                 float3 targetPosition = TranslationsFromEntity[target.entity].Value;
@@ -103,7 +106,7 @@ public class BeeBehaviour : JobComponentSystem
                     if (target.holding) 
                     {
                         // We are holding our target, fly back to base
-                        float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId,0f, translation.Value.z);
+                        float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId, 0f, translation.Value.z);
                         float3 baseDelta = basePos - translation.Value;
                         var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
                         velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
@@ -172,10 +175,10 @@ public class BeeBehaviour : JobComponentSystem
                 velocity.v.y *= .8f;
             }
             float resourceModifier = 0f;
-            //            if (bee.isHoldingResource)
-            //            {
-            //                resourceModifier = ResourceManager.instance.resourceSize;
-            //            }
+            if (target.holding)
+            {
+                resourceModifier = ResourceSize;
+            }
             if (System.Math.Abs(translation.Value.y) > FieldSize.y * .5f - resourceModifier)
             {
                 translation.Value.y = (FieldSize.y * .5f - resourceModifier) * Mathf.Sign(translation.Value.y);
@@ -223,7 +226,8 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.FlightJitter = FlightJitter;
         Beehaviour0.Damping = Damping;
         Beehaviour0.GrabDistance = GrabDistance;
-            Beehaviour0.AttackDistance = AttackDistance;
+        Beehaviour0.AttackDistance = AttackDistance;
+        Beehaviour0.ResourceSize = ResourceSize;
         Beehaviour0.ChaseForce = ChaseForce;
         Beehaviour0.AttackForce = AttackForce;
         Beehaviour0.CarryForce = CarryForce;

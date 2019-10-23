@@ -321,6 +321,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         behaviour.AttackForce = attackForce;
 		behaviour.CarryForce = carryForce;
         behaviour.AttackDistance = attackDistance;
+        behaviour.ResourceSize = ResourceManager.instance.resourceSize;
 
         //set up target finding
         FindTargetSystem findTargetSystem = World.Active.GetOrCreateSystem<FindTargetSystem>();
