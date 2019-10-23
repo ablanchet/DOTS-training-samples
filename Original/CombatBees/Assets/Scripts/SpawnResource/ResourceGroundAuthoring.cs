@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -22,54 +19,38 @@ public class ResourceGroundAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 
         var resourceSize = ResourcePrefab.transform.localScale.x;
         var scale = dstManager.GetComponentData<NonUniformScale>(entity);
-        var translation = dstManager.GetComponentData<Translation>(entity);
 
-        dstManager.AddComponentData(entity, new ResourceGroundComponent
+        dstManager.AddComponentData(entity, new ResourceGroundTag());
+
+        var grid = Vector2Int.RoundToInt(new Vector2(scale.Value.x, scale.Value.z) / resourceSize);
+
+        var gridEntity = dstManager.CreateEntity(typeof(GridTag), typeof(IndexedCell));
+        for (var i = 0; i < grid.x; i++)
         {
-            Dimensions = scale.Value,
-            Y = translation.Value.y
-        });
-
-        var gridCounts = Vector2Int.RoundToInt(new Vector2(scale.Value.x, scale.Value.z) / resourceSize);
-
-        var gridEntity = dstManager.CreateEntity(typeof(GridComponent), typeof(IndexedCell));
-//        dstManager.AddComponentData(gridEntity, new GridComponent());
-
-//        var cells = dstManager.AddBuffer<IndexedCell>(gridEntity);
-
-//        cells.Reserve(gridCounts.x * gridCounts.y);
-        for (var i = 0; i < gridCounts.x; i++)
-        {
-            for (var j = 0; j < gridCounts.y; j++)
+            for (var j = 0; j < grid.y; j++)
             {
                 var cellEntity = dstManager.CreateEntity(typeof(CellComponent));
-//                dstManager.AddComponentData(cellEntity, new CellComponent());
                 var cells = dstManager.GetBuffer<IndexedCell>(gridEntity);
-                cells.Add(new IndexedCell { CellEntity = cellEntity});
+                cells.Add(new IndexedCell { cellEntity = cellEntity});
             }
         }
-
-        Debug.Log($"item size = {resourceSize}");
-        Debug.Log($"grid x = {gridCounts.x}, y = {gridCounts.y}");
     }
 }
 
-public struct ResourceGroundComponent : IComponentData
+public struct ResourceGroundTag : IComponentData
 {
-    public float Y;
-    public float3 Dimensions;
+}
+
+public struct GridTag : IComponentData
+{
 }
 
 public struct CellComponent : IComponentData
 {
-    public int CellHeight;
+    public int resourceCount;
 }
 
 public struct IndexedCell : IBufferElementData
 {
-    public Entity CellEntity;
-}
-
-public struct GridComponent : IComponentData
-{
+    public Entity cellEntity;
 }

@@ -682,11 +682,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ResourcePrefab: {fileID: 7149028951582796646, guid: e52aa095e30b44e4ba77b04626cd8c6e,
     type: 3}
-  resourceSize: 0
-  snapStiffness: 0
-  carryStiffness: 0
-  spawnRate: 0.1
-  startResourceCount: 3
+  SpawnRate: 10
+  startResourceCount: 500
 --- !u!114 &1223759895
 MonoBehaviour:
   m_ObjectHideFlags: 0
