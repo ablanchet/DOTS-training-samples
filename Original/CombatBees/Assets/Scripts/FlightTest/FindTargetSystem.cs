@@ -53,6 +53,11 @@ public class FindTargetSystem : JobComponentSystem
 
         public void Execute(Entity entity, int index, ref FlightTarget flightTarget)
         {
+            if (flightTarget.entity == Entity.Null || !flightTarget.isResource)
+            {
+                flightTarget.holding = false;
+            }
+
             if (flightTarget.entity == Entity.Null)
             {
                 if (rand.NextFloat() < Aggression)
