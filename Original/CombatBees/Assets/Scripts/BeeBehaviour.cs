@@ -19,6 +19,7 @@ public class BeeBehaviour : JobComponentSystem
     public float Damping;
     public float ChaseForce;
     public float GrabDistance;
+    public float AttackDistance;
     public Unity.Mathematics.Random rand;
 
 
@@ -38,9 +39,9 @@ public class BeeBehaviour : JobComponentSystem
         public float FlightJitter;
         public float Damping;
         public float GrabDistance;
+        public float AttackDistance;
         public float ChaseForce;
         public float3 FieldSize;
-
 
         public void Execute([ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target)
         {
@@ -93,32 +94,33 @@ public class BeeBehaviour : JobComponentSystem
                     {
                         throw new System.NotImplementedException();
                     }
-//                    else if (resource.stacked)
-//                    {
-//                        ResourceManager.GrabResource(bee, resource);
-//                    }
+                    //                    else if (resource.stacked)
+                    //                    {
+                    //                        ResourceManager.GrabResource(bee, resource);
+                    //                    }
 
                 }
+                else
+                {
+                    if (sqrDist > AttackDistance * AttackDistance)
+                    {
+                        velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                    }
+                    else
+                    {
+                        throw new System.NotImplementedException();
 
-                //Chasing enemy
-                //delta = bee.enemyTarget.position - bee.position;
-                //float sqrDist = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
-                //if (sqrDist > attackDistance * attackDistance)
-                //{
-                //    bee.velocity += delta * (chaseForce * deltaTime / Mathf.Sqrt(sqrDist));
-                //}
-                //else
-                //{
-                //    bee.isAttacking = true;
-                //    bee.velocity += delta * (attackForce * deltaTime / Mathf.Sqrt(sqrDist));
-                //    if (sqrDist < hitDistance * hitDistance)
-                //    {
-                //        ParticleManager.SpawnParticle(bee.enemyTarget.position, ParticleType.Blood, bee.velocity * .35f, 2f, 6);
-                //        bee.enemyTarget.dead = true;
-                //        bee.enemyTarget.velocity *= .5f;
-                //        bee.enemyTarget = null;
-                //    }
-                //}
+                        //bee.isAttacking = true;
+                        //bee.velocity += delta * (attackForce * deltaTime / Mathf.Sqrt(sqrDist));
+                        //if (sqrDist < hitDistance * hitDistance)
+                        //{
+                        //    ParticleManager.SpawnParticle(bee.enemyTarget.position, ParticleType.Blood, bee.velocity * .35f, 2f, 6);
+                        //    bee.enemyTarget.dead = true;
+                        //    bee.enemyTarget.velocity *= .5f;
+                        //    bee.enemyTarget = null;
+                        //}
+                    }
+                }
             }
 
 
@@ -191,7 +193,8 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.FlightJitter = FlightJitter;
         Beehaviour0.Damping = Damping;
         Beehaviour0.GrabDistance = GrabDistance;
-        Beehaviour0.ChaseForce = ChaseForce;
+            Beehaviour0.AttackDistance = AttackDistance;
+            Beehaviour0.ChaseForce = ChaseForce;
         Beehaviour0.FieldSize = Field.size;
         Beehaviour0.rand = rand;
         rand.NextFloat();
@@ -207,6 +210,7 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour1.FlightJitter = FlightJitter;
         Beehaviour1.Damping = Damping;
         Beehaviour1.GrabDistance = GrabDistance;
+            Beehaviour1.AttackDistance = AttackDistance;
         Beehaviour1.ChaseForce = ChaseForce;
         Beehaviour1.FieldSize = Field.size;
         Beehaviour1.rand = rand;

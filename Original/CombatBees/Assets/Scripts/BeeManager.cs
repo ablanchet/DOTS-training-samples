@@ -311,7 +311,6 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         }
 
         //set up bee flight parameters
-        //spawn bees
         BeeBehaviour behaviour = World.Active.GetExistingSystem<BeeBehaviour>();
         behaviour.TeamAttraction = teamAttraction;
         behaviour.TeamRepulsion = teamRepulsion;
@@ -319,6 +318,10 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         behaviour.Damping = damping;
         behaviour.ChaseForce = chaseForce;
         behaviour.GrabDistance = grabDistance;
+
+        //set up target finding
+        FindTargetSystem findTargetSystem = World.Active.GetOrCreateSystem<FindTargetSystem>();
+        findTargetSystem.Aggression = aggression;
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
