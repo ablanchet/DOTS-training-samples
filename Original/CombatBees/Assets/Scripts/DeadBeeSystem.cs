@@ -12,7 +12,7 @@ public class DeadBeeSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-        float deltaTime = Time.deltaTime;
+        float deltaTime = Time.fixedDeltaTime;
 
         EntityManager manager = World.Active.EntityManager;
         Entities.ForEach((Entity e, ref PendingDeath p) =>

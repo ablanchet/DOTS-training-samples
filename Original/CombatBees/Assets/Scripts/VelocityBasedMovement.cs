@@ -34,7 +34,7 @@ public class VelocityBasedMovement : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         var job = new VelocityBasedMovementJob();
-        job.deltaTime = Time.deltaTime;
+        job.deltaTime = Time.fixedDeltaTime;
         // Assign values to the fields on your job here, so that it has
         // everything it needs to do its work when it runs later.
         // For example,

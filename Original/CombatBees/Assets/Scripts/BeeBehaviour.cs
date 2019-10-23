@@ -220,7 +220,7 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.Enemies = team1Entities;
         Beehaviour0.TranslationsFromEntity = TranslationsFromEntity;
         Beehaviour0.ResourcesDataFromEntity = ResourcesDataFromEntity;
-        Beehaviour0.DeltaTime = Time.deltaTime;
+        Beehaviour0.DeltaTime = Time.fixedDeltaTime;
         Beehaviour0.TeamAttraction = TeamAttraction;
         Beehaviour0.TeamRepulsion = TeamRepulsion;
         Beehaviour0.FlightJitter = FlightJitter;

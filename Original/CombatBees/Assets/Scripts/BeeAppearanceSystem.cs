@@ -60,7 +60,7 @@ public class BeeAppearanceSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         var job = new BeeScalingSystemJob();
-        job.DeltaTime = Time.deltaTime;
+        job.DeltaTime = Time.fixedDeltaTime;
         job.RotationStiffness = RotationStiffness;
         job.SpeedStretch = SpeedStretch;
 
