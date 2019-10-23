@@ -1,6 +1,7 @@
+using Unity.Collections;
 using Unity.Mathematics;
 
-public class Grid
+public class GridHelper
 {
     public static float3 SnapPointToGroundGrid(float2 groundBoundaries, float cellSize, float3 point)
     {
@@ -13,4 +14,6 @@ public class Grid
 
         return new float3(x, point.y, z);
     }
+
+    public static NativeArray<int> StackHeights;
 }

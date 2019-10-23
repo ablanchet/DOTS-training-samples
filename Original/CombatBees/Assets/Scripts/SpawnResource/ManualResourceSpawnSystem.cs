@@ -19,7 +19,7 @@ public class ManualResourceSpawnSystem : ComponentSystem
             while (m_SpawnTimer > 1f / config.spawnRate)
             {
                 m_SpawnTimer -= 1f / config.spawnRate;
-                var pos = Grid.SnapPointToGroundGrid(ground.xzMaxBoundaries, resourceSize, MouseRaycaster.worldMousePosition);
+                var pos = GridHelper.SnapPointToGroundGrid(ground.xzMaxBoundaries, resourceSize, MouseRaycaster.worldMousePosition);
 
                 var instance = PostUpdateCommands.Instantiate(config.resourcePrefab);
                 PostUpdateCommands.SetComponent(instance, new Translation { Value = pos });

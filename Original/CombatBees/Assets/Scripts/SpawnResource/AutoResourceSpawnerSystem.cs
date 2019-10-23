@@ -19,7 +19,7 @@ public class AutoResourceSpawnerSystem : ComponentSystem
 
                 for (var i = 0; i < spawnOnStart.startResourceCount; i++)
                 {
-                    var pos = Grid.SnapPointToGroundGrid(xzMaxBoundaries, resourceSize, random.NextFloat3(minGridPos, maxGridPos));
+                    var pos = GridHelper.SnapPointToGroundGrid(xzMaxBoundaries, resourceSize, random.NextFloat3(minGridPos, maxGridPos));
 
                     var instance = PostUpdateCommands.Instantiate(spawnerConfiguration.resourcePrefab);
                     PostUpdateCommands.SetComponent(instance, new Translation { Value = pos });

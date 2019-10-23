@@ -63,5 +63,5 @@ public struct ResourceFallingTag : IComponentData
 
 public struct TargetCell : IComponentData
 {
-    public Entity cellEntity;
+    public int cellIdx;
 }
