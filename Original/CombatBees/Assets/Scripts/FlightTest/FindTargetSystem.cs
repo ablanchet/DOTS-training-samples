@@ -8,6 +8,7 @@ using Unity.Jobs;
 [UpdateAfter(typeof(AutoResourceSpawnerSystem))]
 public class FindTargetSystem : JobComponentSystem
 {
+    EntityManager manager;
     private EntityQuery resourceQuery;
     private EntityQuery Team0Query;
     private EntityQuery Team1Query;
@@ -22,6 +23,8 @@ public class FindTargetSystem : JobComponentSystem
         Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>(), ComponentType.ReadWrite<FlightTarget>());
         Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>(), ComponentType.ReadWrite<FlightTarget>());
         rand = new Unity.Mathematics.Random(3);
+
+        manager = World.Active.EntityManager;
     }
 
     struct CleanupJob : IJob
@@ -79,7 +82,7 @@ public class FindTargetSystem : JobComponentSystem
 
             if (flightTarget.entity != Entity.Null)
             {
-                if (flightTarget.isResource)
+                if (flightTarget.isResource && resourcesDataFromEntity.Exists(flightTarget.entity))
                 {
                     if (!flightTarget.holding && resourcesDataFromEntity[flightTarget.entity].held)
                     {

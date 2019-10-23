@@ -89,13 +89,17 @@ public class BeeBehaviour : JobComponentSystem
             }
 
             //targetting resouce / enemy
-            if (target.entity != Entity.Null)
+            if (target.entity != Entity.Null && TranslationsFromEntity.Exists(target.entity))
             {
                 float3 targetPosition = TranslationsFromEntity[target.entity].Value;
                 float3 targetDelta = targetPosition - translation.Value;
                 float sqrDist = targetDelta.x * targetDelta.x + targetDelta.y * targetDelta.y + targetDelta.z * targetDelta.z;
 
-                if (target.isResource)
+                if (target.isResource && !ResourcesDataFromEntity.Exists(target.entity)) {
+                    // Clear the target since it doesn't exist anymore
+                    CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
+                } 
+                else if (target.isResource && ResourcesDataFromEntity.Exists(target.entity))
                 {
                     // Get the resource data from the target. To check if it is being held or not
                     var resData = ResourcesDataFromEntity[target.entity];
@@ -115,6 +119,7 @@ public class BeeBehaviour : JobComponentSystem
                             // Free the resource
                             CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
                             CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                            CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
                         }
                     } 
                     else if (sqrDist > GrabDistance * GrabDistance) 
@@ -223,7 +228,7 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.FlightJitter = FlightJitter;
         Beehaviour0.Damping = Damping;
         Beehaviour0.GrabDistance = GrabDistance;
-            Beehaviour0.AttackDistance = AttackDistance;
+        Beehaviour0.AttackDistance = AttackDistance;
         Beehaviour0.ChaseForce = ChaseForce;
         Beehaviour0.AttackForce = AttackForce;
         Beehaviour0.CarryForce = CarryForce;
