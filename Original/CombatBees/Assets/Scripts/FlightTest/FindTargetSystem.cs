@@ -3,9 +3,10 @@ using Unity.Transforms;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Collections;
+using Unity.Jobs;
 
 [UpdateAfter(typeof(SpawnerResourceSystem))]
-public class FindTargetSystem : ComponentSystem
+public class FindTargetSystem : JobComponentSystem
 {
     private EntityQuery resourceQuery;
     private EntityQuery Team0Query;
@@ -81,5 +82,9 @@ public class FindTargetSystem : ComponentSystem
                     }
                 });
         }
+    }
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
+    {
+        throw new System.NotImplementedException();
     }
 }
