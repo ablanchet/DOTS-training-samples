@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Jobs;
 
 [UpdateAfter(typeof(SpawnerResourceSystem))]
+[UpdateAfter(typeof(AutoResourceSpawnerSystem))]
 public class FindTargetSystem : JobComponentSystem
 {
     private EntityQuery resourceQuery;
