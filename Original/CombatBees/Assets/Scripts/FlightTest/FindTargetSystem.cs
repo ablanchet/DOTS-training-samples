@@ -81,7 +81,7 @@ public class FindTargetSystem : JobComponentSystem
             {
                 if (flightTarget.isResource)
                 {
-                    if (resourcesDataFromEntity[flightTarget.entity].held)
+                    if (!flightTarget.holding && resourcesDataFromEntity[flightTarget.entity].held)
                     {
                         flightTarget.entity = Entity.Null;
                     }
