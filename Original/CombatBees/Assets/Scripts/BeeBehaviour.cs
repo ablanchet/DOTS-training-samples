@@ -100,38 +100,38 @@ public class BeeBehaviour : JobComponentSystem
                     // Get the resource data from the target. To check if it is being held or not
                     var resData = ResourcesDataFromEntity[target.entity];
 
-                    if (resData.held) {
-                        // This is not a valid target anymore.
-                        CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
-                    } else {
-                        if (target.holding) 
-                        {
-                            // We are holding our target, fly back to base
-                            float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId,0f, translation.Value.z);
-						    float3 baseDelta = basePos - translation.Value;
-						    var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
-						    velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
+                    if (target.holding) 
+                    {
+                        // We are holding our target, fly back to base
+                        float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId,0f, translation.Value.z);
+                        float3 baseDelta = basePos - translation.Value;
+                        var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
+                        velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
 
-                            if (dist < 1f) {
-                                // Drop resource
-							    //resource.holder = null;
-							    //bee.resourceTarget = null;
-						    }
-                        } 
-                        else if (sqrDist > GrabDistance * GrabDistance) 
-                        {
-                            //moving to resources
-                            velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                        if (dist < 1f) {
+                            // Remove target
+                            CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
+
+                            // Free the resource
+                            CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
+                            CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
                         }
-                        else
-                        {
-                            CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
-                            target.holding = true;
-                        }
-                        //                    else if (resource.stacked)
-                        //                    {
-                        //                        ResourceManager.GrabResource(bee, resource);
-                        //                    }
+                    } 
+                    else if (sqrDist > GrabDistance * GrabDistance) 
+                    {
+                        //moving to resources
+                        velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                    }
+                    else
+                    {
+                        CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget {
+                            entity = target.entity,
+                            isResource = target.isResource,
+                            holding = true
+                        });
+                        CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                        CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
+                        CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
                     }
                 }
                 else
@@ -229,7 +229,7 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.CarryForce = CarryForce;
         Beehaviour0.FieldSize = Field.size;
         Beehaviour0.rand = rand;
-        Beehaviour0.teamId = -1;
+        Beehaviour0.teamId = 0;
         rand.NextFloat();
         Beehaviour0.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
 
