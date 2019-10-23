@@ -59,21 +59,21 @@ public class ResourceFallSystem : JobComponentSystem
 
             t.Value.y += k_Gravity * dt;
 
-            if (myCell.resourceCount > 0 && t.Value.y <= groundY +  + myCell.resourceCount * resourcePrefabHeight)
+            if (myCell.resourceCount > 0 && t.Value.y <= groundY + resourcePrefabHeight + myCell.resourceCount * resourcePrefabHeight * 2)
             {
-                t.Value.y = groundY +  resourcePrefabHeight + myCell.resourceCount * resourcePrefabHeight;
+                t.Value.y = groundY + resourcePrefabHeight + myCell.resourceCount * resourcePrefabHeight * 2;
+                myCell.resourceCount++;
 
-                commandBuffer.SetComponent(index, targetCell.cellEntity, new CellComponent { resourceCount = myCell.resourceCount + 1 });
+                commandBuffer.SetComponent(index, targetCell.cellEntity, new CellComponent { resourceCount = myCell.resourceCount});
                 commandBuffer.RemoveComponent<ResourceFallingTag>(index, e);
                 return;
             }
-
-            if (t.Value.y <= groundY + resourcePrefabHeight)
+            else if (myCell.resourceCount == 0 && t.Value.y <= groundY + resourcePrefabHeight)
             {
                 t.Value.y = groundY + resourcePrefabHeight;
                 myCell.resourceCount++;
 
-                commandBuffer.SetComponent(index, targetCell.cellEntity, new CellComponent { resourceCount = myCell.resourceCount + 1 });
+                commandBuffer.SetComponent(index, targetCell.cellEntity, new CellComponent { resourceCount = myCell.resourceCount });
                 commandBuffer.RemoveComponent<ResourceFallingTag>(index, e);
             }
         }
