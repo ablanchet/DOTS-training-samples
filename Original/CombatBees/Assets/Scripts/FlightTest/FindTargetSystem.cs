@@ -81,14 +81,14 @@ public class FindTargetSystem : JobComponentSystem
             {
                 if (flightTarget.isResource)
                 {
-                    if (!resourcesDataFromEntity.Exists(flightTarget.entity) || resourcesDataFromEntity[flightTarget.entity].held)
+                    if (resourcesDataFromEntity[flightTarget.entity].held)
                     {
                         flightTarget.entity = Entity.Null;
                     }
                 }
                 else
                 {
-                    if (!deathFromEntity.Exists(flightTarget.entity) || deathFromEntity.HasComponent(flightTarget.entity))
+                    if (deathFromEntity.HasComponent(flightTarget.entity))
                     {
                         flightTarget.entity = Entity.Null;
                     }
@@ -107,9 +107,9 @@ public class FindTargetSystem : JobComponentSystem
         JobHandle resourceGatherHandle;
         ResourceEntities = resourceQuery.ToEntityArray(Allocator.TempJob, out resourceGatherHandle);
         JobHandle team0GatherHandle;
-        Team0Entities = resourceQuery.ToEntityArray(Allocator.TempJob, out team0GatherHandle);
+        Team0Entities = Team0Query.ToEntityArray(Allocator.TempJob, out team0GatherHandle);
         JobHandle team1GatherHandle;
-        Team1Entities = resourceQuery.ToEntityArray(Allocator.TempJob, out team1GatherHandle);
+        Team1Entities = Team1Query.ToEntityArray(Allocator.TempJob, out team1GatherHandle);
 
         TargetUpdateJob targetUpdateJob0 = new TargetUpdateJob();
         targetUpdateJob0.rand = rand;
