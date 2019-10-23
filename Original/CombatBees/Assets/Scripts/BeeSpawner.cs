@@ -49,11 +49,12 @@ public class BeeSpawner : JobComponentSystem
 
             Entity spawnedEntity;
             spawnedEntity = CommandBuffer.Instantiate(index, BeePrototypes[request.Team]);
-            
+
             CommandBuffer.AddComponent<BeeSize>(index, spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize) });
             CommandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation() { Value = translation.Value });
             CommandBuffer.AddComponent<Velocity>(index, spawnedEntity, new Velocity() { v = float3(0) });
-            CommandBuffer.AddComponent<FlightTarget>(index, spawnedEntity, new FlightTarget() );
+            CommandBuffer.AddComponent<FlightTarget>(index, spawnedEntity, new FlightTarget());
+            CommandBuffer.AddComponent<NonUniformScale>(index, spawnedEntity);
 
             if (request.Team == 0)
             {
@@ -78,7 +79,7 @@ public class BeeSpawner : JobComponentSystem
         rand.NextFloat();
 
         // Now that the job is set up, schedule it to be run. 
-        JobHandle  jobHandle = job.Schedule(this, inputDependencies);
+        JobHandle jobHandle = job.Schedule(this, inputDependencies);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(jobHandle);
         return jobHandle;
     }
