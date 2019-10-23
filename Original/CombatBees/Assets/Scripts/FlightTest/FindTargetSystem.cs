@@ -19,8 +19,8 @@ public class FindTargetSystem : JobComponentSystem
         resourceQuery = GetEntityQuery(
             ComponentType.ReadOnly<ResourceData>()
         );
-        Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>());
-        Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>());
+        Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>(), ComponentType.ReadWrite<FlightTarget>());
+        Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>(), ComponentType.ReadWrite<FlightTarget>());
         rand = new Unity.Mathematics.Random(3);
     }
 
@@ -119,11 +119,11 @@ public class FindTargetSystem : JobComponentSystem
         targetUpdateJob0.deathFromEntity = GetComponentDataFromEntity<Death>();
         targetUpdateJob0.resourcesDataFromEntity = GetComponentDataFromEntity<ResourceData>();
         targetUpdateJob0.Aggression = Aggression;
-        JobHandle TargetUpdate0Handle = targetUpdateJob0.Schedule(this, JobHandle.CombineDependencies(inputDeps, resourceGatherHandle, team1GatherHandle));
+        JobHandle TargetUpdate0Handle = targetUpdateJob0.Schedule(Team0Query, JobHandle.CombineDependencies(inputDeps, resourceGatherHandle, team1GatherHandle));
 
         TargetUpdateJob targetUpdateJob1 = targetUpdateJob0;
         targetUpdateJob1.EnemyList = Team0Entities;
-        JobHandle TargetUpdate1Handle = targetUpdateJob1.Schedule(this, JobHandle.CombineDependencies(TargetUpdate0Handle, team0GatherHandle));
+        JobHandle TargetUpdate1Handle = targetUpdateJob1.Schedule(Team1Query, JobHandle.CombineDependencies(TargetUpdate0Handle, team0GatherHandle));
 
         CleanupJob cleanupJob = new CleanupJob();
         cleanupJob.array0 = ResourceEntities;
