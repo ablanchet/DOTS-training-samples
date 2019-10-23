@@ -291,6 +291,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         spawner.BeePrototypes[1] = conversionSystem.GetPrimaryEntity(beePrefab1);
         spawner.maxBeeSize = maxBeeSize;
         spawner.minBeeSize = minBeeSize;
+        spawner.maxSpawnSpeed = maxSpawnSpeed;
 
         int[] TeamSizes = new int[2] { startBeeCount - startBeeCount / 2, startBeeCount / 2 };
 
@@ -309,6 +310,28 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
                 }
             }
         }
+
+        //set up bee flight parameters
+        BeeBehaviour behaviour = World.Active.GetExistingSystem<BeeBehaviour>();
+        behaviour.TeamAttraction = teamAttraction;
+        behaviour.TeamRepulsion = teamRepulsion;
+        behaviour.FlightJitter = flightJitter;
+        behaviour.Damping = damping;
+        behaviour.ChaseForce = chaseForce;
+        behaviour.GrabDistance = grabDistance;
+        behaviour.AttackForce = attackForce;
+		behaviour.CarryForce = carryForce;
+        behaviour.AttackDistance = attackDistance;
+
+        //set up target finding
+        FindTargetSystem findTargetSystem = World.Active.GetOrCreateSystem<FindTargetSystem>();
+        findTargetSystem.Aggression = aggression;
+
+        //appearance of bees
+        BeeAppearanceSystem beeAppearanceSystem = World.Active.GetOrCreateSystem<BeeAppearanceSystem>();
+        beeAppearanceSystem.RotationStiffness = rotationStiffness;
+        beeAppearanceSystem.SpeedStretch = speedStretch;
+
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
