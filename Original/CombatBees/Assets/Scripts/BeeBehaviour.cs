@@ -36,6 +36,9 @@ public class BeeBehaviour : JobComponentSystem
         public NativeArray<Entity> Enemies;
         [ReadOnly]
         public ComponentDataFromEntity<Translation> TranslationsFromEntity;
+
+        [ReadOnly]
+        public ComponentDataFromEntity<ResourceData> ResourcesDataFromEntity;
         public Unity.Mathematics.Random rand;
         public float DeltaTime;
         public float TeamAttraction;
@@ -49,7 +52,7 @@ public class BeeBehaviour : JobComponentSystem
         public float3 FieldSize;
         public EntityCommandBuffer.Concurrent CommandBuffer;
 
-        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target, ref BeeState beeState)
+        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, ref FlightTarget target, ref BeeState beeState)
         {
             //Jitter & Damping
             {
@@ -91,20 +94,32 @@ public class BeeBehaviour : JobComponentSystem
 
                 if (target.isResource)
                 {
-                    //moving to resources
-                    if (sqrDist > GrabDistance * GrabDistance)
-                    {
-                        velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
-                    }
-                    else
-                    {
-                        throw new System.NotImplementedException();
-                    }
-                    //                    else if (resource.stacked)
-                    //                    {
-                    //                        ResourceManager.GrabResource(bee, resource);
-                    //                    }
+                    // Get the resource data from the target. To check if it is being held or not
+                    var resData = ResourcesDataFromEntity[target.entity];
 
+                    if (resData.held) {
+                        // This is not a valid target anymore.
+                        CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
+                    } else {
+                        if (target.holding) 
+                        {
+                            // We are holding our target, fly back to base
+                        } 
+                        else if (sqrDist > GrabDistance * GrabDistance) 
+                        {
+                            //moving to resources
+                            velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                        }
+                        else
+                        {
+                            CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
+                            target.holding = true;
+                        }
+                        //                    else if (resource.stacked)
+                        //                    {
+                        //                        ResourceManager.GrabResource(bee, resource);
+                        //                    }
+                    }
                 }
                 else
                 {
@@ -180,11 +195,13 @@ public class BeeBehaviour : JobComponentSystem
         JobHandle allGathersHandle = JobHandle.CombineDependencies(getTeam0Handle, getTeam1Handle);
 
         var TranslationsFromEntity = GetComponentDataFromEntity<Translation>(true);
+        var ResourcesDataFromEntity = GetComponentDataFromEntity<ResourceData>(true);
 
         var Beehaviour0 = new BeeBehaviourJob();
         Beehaviour0.Friends = team0Entities;
         Beehaviour0.Enemies = team1Entities;
         Beehaviour0.TranslationsFromEntity = TranslationsFromEntity;
+        Beehaviour0.ResourcesDataFromEntity = ResourcesDataFromEntity;
         Beehaviour0.DeltaTime = Time.deltaTime;
         Beehaviour0.TeamAttraction = TeamAttraction;
         Beehaviour0.TeamRepulsion = TeamRepulsion;
