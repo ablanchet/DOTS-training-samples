@@ -27,6 +27,7 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
         var groundTranslation = EntityManager.GetComponentData<Translation>(ground).Value;
         var groundScale = EntityManager.GetComponentData<NonUniformScale>(ground).Value;
         var groundBoundaries = new float2(groundTranslation.x + groundScale.x / 2, groundTranslation.z + groundScale.z / 2);
+        var resourcesPerRow = (int)math.round(groundScale.x / config.resourceScale.x);
 
         var gridEntity = GetSingletonEntity<GridTag>();
         var indexedCells = EntityManager.GetBuffer<IndexedCell>(gridEntity).ToNativeArray(Allocator.TempJob);
@@ -36,7 +37,8 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
             commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             resourceSize = config.resourceScale.x,
             indexedCells = indexedCells,
-            groundBoundaries = groundBoundaries
+            groundBoundaries = groundBoundaries,
+            resourcesPerRow = resourcesPerRow
         }.Schedule(m_Query, inputDeps);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(handle);
@@ -51,13 +53,16 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
         public NativeArray<IndexedCell> indexedCells;
         public float resourceSize;
         public float2 groundBoundaries;
+        public int resourcesPerRow;
 
         public void Execute(Entity entity, int index, [ReadOnly] ref Translation t)
         {
             var xDistance = math.abs(t.Value.x - groundBoundaries.x);
             var zDistance = math.abs(t.Value.z - groundBoundaries.y);
 
-            var cellIdx = (int) (math.round(xDistance / resourceSize) * math.round(zDistance / resourceSize));
+            var horizontalResourceCount = xDistance <= resourceSize ? 0 : math.round(xDistance / resourceSize) - 1;
+            var verticalResourceCount = zDistance <= resourceSize ? 0 : math.round(zDistance / resourceSize) - 1;
+            var cellIdx = (int)(verticalResourceCount * resourcesPerRow + horizontalResourceCount);
             var cellEntity = indexedCells[cellIdx].cellEntity;
 
             commandBuffer.AddComponent(index, entity, new TargetCell { cellEntity = cellEntity });
