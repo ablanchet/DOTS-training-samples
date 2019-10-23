@@ -307,7 +307,7 @@ MonoBehaviour:
   attackForce: 500
   hitDistance: 0.5
   maxSpawnSpeed: 75
-  startBeeCount: 2
+  startBeeCount: 20000
 --- !u!4 &374635490
 Transform:
   m_ObjectHideFlags: 0
@@ -591,7 +591,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d53f2472ab3467a95beac5342783013, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ResourcePrefab: {fileID: 0}
+  ResourcePrefab: {fileID: 7149028951582796646, guid: e52aa095e30b44e4ba77b04626cd8c6e,
+    type: 3}
 --- !u!4 &950338056
 Transform:
   m_ObjectHideFlags: 0
