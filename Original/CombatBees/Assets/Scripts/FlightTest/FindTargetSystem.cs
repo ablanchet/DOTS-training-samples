@@ -27,6 +27,7 @@ public class FindTargetSystem : ComponentSystem
         // between ComponentSystem Update (logic) and ComponentData (data).
         // There is no update logic on the individual ComponentData.
         var resourcesData = GetComponentDataFromEntity<ResourceData>();
+        var beeStateFromEntity = GetComponentDataFromEntity<BeeState>();
 
         using (NativeArray<Entity> resourcesList = resourceQuery.ToEntityArray(Allocator.TempJob))
         using (NativeArray<Entity> team0List = Team0Query.ToEntityArray(Allocator.TempJob))
@@ -70,7 +71,10 @@ public class FindTargetSystem : ComponentSystem
                         }
                         else
                         {
-                            //todo: check for dead target bee
+                            if (beeStateFromEntity[target.entity].Dead)
+                            {
+                                target.entity = Entity.Null;
+                            }
                         }
                     }
                 });

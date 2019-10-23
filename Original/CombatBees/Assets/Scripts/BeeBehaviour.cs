@@ -24,7 +24,7 @@ public class BeeBehaviour : JobComponentSystem
 
 
     [BurstCompile]
-    struct BeeBehaviourJob : IJobForEach<Translation, Velocity, FlightTarget>
+    struct BeeBehaviourJob : IJobForEach<Translation, Velocity, FlightTarget, BeeState>
     {
         [ReadOnly]
         public NativeArray<Entity> Friends;
@@ -43,7 +43,7 @@ public class BeeBehaviour : JobComponentSystem
         public float ChaseForce;
         public float3 FieldSize;
 
-        public void Execute([ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target)
+        public void Execute([ReadOnly]ref Translation translation, ref Velocity velocity, [ReadOnly]ref FlightTarget target, ref BeeState beeState)
         {
             //Jitter & Damping
             {
@@ -230,8 +230,8 @@ public class BeeBehaviour : JobComponentSystem
         base.OnCreate();
         BeeTeam0GatherQuery = GetEntityQuery(typeof(BeeTeam0), typeof(Translation));
         BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
-        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>());
-        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>());
+        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>());
+        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeState>());
         rand = new Unity.Mathematics.Random(3);
     }
 }

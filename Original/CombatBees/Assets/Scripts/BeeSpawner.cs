@@ -45,6 +45,7 @@ public class BeeSpawner : JobComponentSystem
             CommandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation() { Value = translation.Value });
             CommandBuffer.AddComponent<Velocity>(index, spawnedEntity, new Velocity() { v = float3(0) });
             CommandBuffer.AddComponent<FlightTarget>(index, spawnedEntity, new FlightTarget() );
+            CommandBuffer.AddComponent<BeeState>(index, spawnedEntity, new BeeState() { Attacking = false, Dead = false });
 
             if (request.Team == 0)
             {
