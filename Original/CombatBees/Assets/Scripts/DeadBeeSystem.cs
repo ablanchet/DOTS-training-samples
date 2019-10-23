@@ -22,9 +22,10 @@ public class DeadBeeSystem : ComponentSystem
             {
                 FlightTarget flightTarget = manager.GetComponentData<FlightTarget>(target);
 
-                if (flightTarget.entity != Entity.Null && flightTarget.isResource) {
+                if (flightTarget.entity != Entity.Null && flightTarget.isResource && GetComponentDataFromEntity<ResourceFallingTag>(true).Exists(flightTarget.entity)) {
                     manager.RemoveComponent<FollowEntity>(flightTarget.entity);
                     manager.AddComponent<ResourceFallingTag>(flightTarget.entity);
+                    manager.SetComponentData<ResourceData>(flightTarget.entity, new ResourceData { held = false, holder = Entity.Null });
                 }
 
                 manager.SetComponentData<FlightTarget>(target, new FlightTarget());
