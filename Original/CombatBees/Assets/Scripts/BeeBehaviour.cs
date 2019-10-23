@@ -200,19 +200,9 @@ public class BeeBehaviour : JobComponentSystem
         rand.NextFloat();
         JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, allGathersHandle);
 
-        var Beehaviour1 = new BeeBehaviourJob();
+        var Beehaviour1 = Beehaviour0;
         Beehaviour1.Friends = team1Entities;
         Beehaviour1.Enemies = team0Entities;
-        Beehaviour1.TranslationsFromEntity = TranslationsFromEntity;
-        Beehaviour1.DeltaTime = Time.deltaTime;
-        Beehaviour1.TeamAttraction = TeamAttraction;
-        Beehaviour1.TeamRepulsion = TeamRepulsion;
-        Beehaviour1.FlightJitter = FlightJitter;
-        Beehaviour1.Damping = Damping;
-        Beehaviour1.GrabDistance = GrabDistance;
-            Beehaviour1.AttackDistance = AttackDistance;
-        Beehaviour1.ChaseForce = ChaseForce;
-        Beehaviour1.FieldSize = Field.size;
         Beehaviour1.rand = rand;
         rand.NextFloat();
         JobHandle BeeHaviour1Handle = Beehaviour1.Schedule(BeeTeam1UpdateQuery, BeeHaviour0Handle);  //this doesn't actually need to wait for BeeHaviour0Handle, but safety is confused about whether there might be some query overlap
