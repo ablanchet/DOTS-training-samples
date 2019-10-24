@@ -56,12 +56,3 @@ public struct SpawnRandomResourceOnStart : IComponentData
 {
     public int startResourceCount;
 }
-
-public struct ResourceFallingTag : IComponentData
-{
-}
-
-public struct TargetCell : IComponentData
-{
-    public Entity cellEntity;
-}

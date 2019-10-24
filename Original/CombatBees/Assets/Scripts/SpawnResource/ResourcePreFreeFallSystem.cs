@@ -23,21 +23,14 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
     {
         var config = GetSingleton<ResourceSpawnerConfiguration>();
 
-        var ground = GetSingletonEntity<ResourceGroundTag>();
-        var groundTranslation = EntityManager.GetComponentData<Translation>(ground).Value;
-        var groundScale = EntityManager.GetComponentData<NonUniformScale>(ground).Value;
-        var groundBoundaries = new float2(groundTranslation.x + groundScale.x / 2, groundTranslation.z + groundScale.z / 2);
-        var resourcesPerRow = (int)math.round(groundScale.x / config.resourceScale.x);
-
-        var gridEntity = GetSingletonEntity<GridTag>();
-        var indexedCells = EntityManager.GetBuffer<IndexedCell>(gridEntity).ToNativeArray(Allocator.TempJob);
+        var ground = GetSingleton<ResourceGround>();
+        var resourcesPerRow = (int)math.round(ground.scale.x / config.resourceScale.x);
 
         var handle = new SetTargetCellJob
         {
             commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             resourceSize = config.resourceScale.x,
-            indexedCells = indexedCells,
-            groundBoundaries = groundBoundaries,
+            groundBoundaries = ground.xzMaxBoundaries,
             resourcesPerRow = resourcesPerRow
         }.Schedule(m_Query, inputDeps);
 
@@ -48,8 +41,6 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
     struct SetTargetCellJob : IJobForEachWithEntity_EC<Translation>
     {
         public EntityCommandBuffer.Concurrent commandBuffer;
-        [ReadOnly, DeallocateOnJobCompletion]
-        public NativeArray<IndexedCell> indexedCells;
         public float resourceSize;
         public float2 groundBoundaries;
         public int resourcesPerRow;
@@ -63,9 +54,8 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
             var verticalResourceCount = zDistance <= resourceSize ? 0 : math.trunc(zDistance / resourceSize);
 
             var cellIdx = (int)(verticalResourceCount * resourcesPerRow + horizontalResourceCount);
-            var cellEntity = indexedCells[cellIdx].cellEntity;
 
-            commandBuffer.AddComponent(index, entity, new TargetCell { cellEntity = cellEntity });
+            commandBuffer.AddComponent(index, entity, new TargetCell { cellIdx = cellIdx });
         }
     }
 }
