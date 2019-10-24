@@ -35,4 +35,9 @@ public class ResourceFallSystem : ComponentSystem
             }
         });
     }
+
+    protected override void OnDestroy()
+    {
+        GridHelper.StackHeights.Dispose();
+    }
 }

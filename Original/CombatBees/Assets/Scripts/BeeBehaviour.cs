@@ -115,7 +115,7 @@ public class BeeBehaviour : JobComponentSystem
                         var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
                         velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
 
-                        if (dist < 1f) {
+                        if (dist < 5f) {
                             // Remove target
                             CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
 
