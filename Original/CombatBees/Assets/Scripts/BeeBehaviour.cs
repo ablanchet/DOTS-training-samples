@@ -295,7 +295,7 @@ public class BeeBehaviour : JobComponentSystem
 
         var resolveInteractionsJob = new BeeBehaviourResolveInteractions() { CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(), deathMessageArchetype = deathMessageArchetype};
         resolveInteractionsJob.TranslationsFromEntity = TranslationsFromEntity;
-        JobHandle resolveInteractionsHandle = resolveInteractionsJob.ScheduleSingle(this, BothBeeBehaviourHandles);
+        JobHandle resolveInteractionsHandle = resolveInteractionsJob.Schedule(this, BothBeeBehaviourHandles);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(resolveInteractionsHandle);
 
         var cleanupJob = new CleanupJob();
