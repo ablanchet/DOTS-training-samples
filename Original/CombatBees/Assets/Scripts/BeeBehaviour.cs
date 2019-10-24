@@ -15,6 +15,7 @@ public class BeeBehaviour : JobComponentSystem
     EntityQuery BeeTeam1GatherQuery;
     EntityQuery BeeTeam0UpdateQuery;
     EntityQuery BeeTeam1UpdateQuery;
+    EntityArchetype deathMessageArchetype;
     public float TeamAttraction;
     public float TeamRepulsion;
     public float FlightJitter;
@@ -29,7 +30,7 @@ public class BeeBehaviour : JobComponentSystem
 
 
     //burst is not currently friendly with the command buffer
-    //[BurstCompile]
+    [BurstCompile]
     struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeSize>
     {
         [ReadOnly]
@@ -55,7 +56,7 @@ public class BeeBehaviour : JobComponentSystem
         public float AttackForce;
         public float CarryForce;
         public float3 FieldSize;
-        public EntityCommandBuffer.Concurrent CommandBuffer;
+        //public EntityCommandBuffer.Concurrent CommandBuffer;
 
         public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, ref FlightTarget target, ref BeeSize beeSize)
         {
@@ -100,7 +101,7 @@ public class BeeBehaviour : JobComponentSystem
 
                 if (target.isResource && !ResourcesDataFromEntity.Exists(target.entity)) {
                     // Clear the target since it doesn't exist anymore
-                    CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
+                    target = new FlightTarget();
                 } 
                 else if (target.isResource && ResourcesDataFromEntity.Exists(target.entity))
                 {
@@ -117,12 +118,7 @@ public class BeeBehaviour : JobComponentSystem
 
                         if (dist < 1f) {
                             // Remove target
-                            CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
-
-                            // Free the resource
-                            CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
-                            CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                            CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
+                            target.PendingAction = FlightTarget.Action.DropResource;
                         }
                     } 
                     else if (sqrDist > GrabDistance * GrabDistance) 
@@ -132,14 +128,7 @@ public class BeeBehaviour : JobComponentSystem
                     }
                     else
                     {
-                        CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget {
-                            entity = target.entity,
-                            isResource = target.isResource,
-                            holding = true
-                        });
-                        CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                        CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
-                        CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
+                        target.PendingAction = FlightTarget.Action.GrabResource;
                     }
                 }
                 else
@@ -152,9 +141,7 @@ public class BeeBehaviour : JobComponentSystem
                     {
                         beeSize.Attacking = true;
                         velocity.v += targetDelta * (AttackForce * DeltaTime / Mathf.Sqrt(sqrDist));
-
-                        Entity DeathMessage = CommandBuffer.CreateEntity(index);
-                        CommandBuffer.AddComponent<PendingDeath>(index, DeathMessage, new PendingDeath() { EntityThatWillDie = target.entity });
+                        target.PendingAction = FlightTarget.Action.Kill;
                     }
                 }
             }
@@ -191,6 +178,48 @@ public class BeeBehaviour : JobComponentSystem
                 velocity.v.z *= .8f;
                 velocity.v.x *= .8f;
             }
+        }
+    }
+
+    struct BeeBehaviourResolveInteractions : IJobForEachWithEntity<FlightTarget>
+    {
+        public EntityArchetype deathMessageArchetype;
+        public EntityCommandBuffer.Concurrent CommandBuffer;
+
+        public void Execute(Entity e, int index, ref FlightTarget target)
+        {
+            if (target.PendingAction == FlightTarget.Action.None)
+            {
+                return;
+            }
+
+            switch(target.PendingAction)
+            {
+                case FlightTarget.Action.GrabResource:
+                    {
+                        target.holding = true;
+                        CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                        CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
+                        CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
+                    }
+                    break;
+
+                case FlightTarget.Action.DropResource:
+                    {
+                        CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
+                        CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                        CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
+                        target = new FlightTarget();
+                    }
+                    break;
+                case FlightTarget.Action.Kill:
+                    {
+                        Entity DeathMessage = CommandBuffer.CreateEntity(index);
+                        CommandBuffer.AddComponent<PendingDeath>(index, DeathMessage, new PendingDeath() { EntityThatWillDie = target.entity });
+                        target = new FlightTarget();
+                    }
+                    break;
+            };
         }
     }
 
@@ -240,10 +269,10 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour0.rand = rand;
         Beehaviour0.teamId = 0;
         rand.NextFloat();
-        Beehaviour0.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
+        //Beehaviour0.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
 
         JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, allGathersHandle);
-        m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour0Handle);
+        //m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour0Handle);
 
         var Beehaviour1 = Beehaviour0;
         Beehaviour1.Friends = team1Entities;
@@ -252,14 +281,22 @@ public class BeeBehaviour : JobComponentSystem
         Beehaviour1.rand = rand;
         rand.NextFloat();
         JobHandle BeeHaviour1Handle = Beehaviour1.Schedule(BeeTeam1UpdateQuery, BeeHaviour0Handle);  //this doesn't actually need to wait for BeeHaviour0Handle, but safety is confused about whether there might be some query overlap
-        m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour1Handle);
+        //m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour1Handle);
+
+        JobHandle BothBeeBehaviourHandles = JobHandle.CombineDependencies(BeeHaviour0Handle, BeeHaviour1Handle);
+
+        var resolveInteractionsJob = new BeeBehaviourResolveInteractions() { CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(), deathMessageArchetype = deathMessageArchetype};
+        JobHandle resolveInteractionsHandle = resolveInteractionsJob.ScheduleSingle(this, BothBeeBehaviourHandles);
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(resolveInteractionsHandle);
 
         var cleanupJob = new CleanupJob();
         cleanupJob.Entities0 = team0Entities;
         cleanupJob.Entities1 = team1Entities;
 
         // Now that the job is set up, schedule it to be run. 
-        return cleanupJob.Schedule(JobHandle.CombineDependencies(BeeHaviour0Handle, BeeHaviour1Handle));
+        JobHandle cleanupHandle = cleanupJob.Schedule(BothBeeBehaviourHandles);
+
+        return JobHandle.CombineDependencies(cleanupHandle, resolveInteractionsHandle);
     }
 
     protected override void OnCreate()
@@ -270,6 +307,9 @@ public class BeeBehaviour : JobComponentSystem
         BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
         BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
         BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
+
+        deathMessageArchetype = EntityManager.CreateArchetype(typeof(PendingDeath));
+
         rand = new Unity.Mathematics.Random(3);
     }
 }
