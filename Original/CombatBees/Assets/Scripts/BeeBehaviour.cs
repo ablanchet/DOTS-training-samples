@@ -9,7 +9,7 @@ using static Unity.Mathematics.math;
 
 public class BeeBehaviour : JobComponentSystem
 {
-    BeginInitializationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+    EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
     EntityQuery BeeTeam0GatherQuery;
     EntityQuery BeeTeam1GatherQuery;
@@ -195,8 +195,11 @@ public class BeeBehaviour : JobComponentSystem
                 return;
             }
 
+            FlightTarget.Action WantedAction = target.PendingAction;
+            target.PendingAction = FlightTarget.Action.None;//ensure we don't leave this action in its pending state when we finish here
+
             if (TranslationsFromEntity.Exists(target.entity)) {
-                switch(target.PendingAction)
+                switch(WantedAction)
                 {
                     case FlightTarget.Action.GrabResource:
                         {
@@ -308,7 +311,7 @@ public class BeeBehaviour : JobComponentSystem
     protected override void OnCreate()
     {
         base.OnCreate();
-        m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
+        m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         BeeTeam0GatherQuery = GetEntityQuery(typeof(BeeTeam0), typeof(Translation));
         BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
         BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
