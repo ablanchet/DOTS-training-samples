@@ -21,6 +21,10 @@ public class BeeSpawnerFromResource : ComponentSystem
 
         Entities.ForEach((Entity e, ref Translation t, ref ResourceData resourceData) =>
         {
+            if (resourceData.dying)
+            {
+                manager.DestroyEntity(e);
+            }
             if (!resourceData.held && Mathf.Abs(t.Value.x) > Field.size.x * .4f && !manager.HasComponent<ResourceFallingTag>(e))
             {
                 sbyte team = 0;
@@ -38,7 +42,7 @@ public class BeeSpawnerFromResource : ComponentSystem
 
                 // ParticleManager.SpawnParticle(t.Value, ParticleType.SpawnFlash, Vector3.zero, 6f, 5);
                 // DeleteResource(resource);
-                manager.DestroyEntity(e);
+                resourceData.dying = true; //delay destruction 1 frame, because we have scheduling issues where a bee will try to grab a resource as it is being destroyed
             }
         });
     }

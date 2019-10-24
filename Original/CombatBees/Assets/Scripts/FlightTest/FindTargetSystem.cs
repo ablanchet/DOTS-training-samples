@@ -76,7 +76,8 @@ public class FindTargetSystem : JobComponentSystem
                     if (ResourceList.Length > 0)
                     {
                         Entity possibleTarget = ResourceList[rand.NextInt(0, ResourceList.Length)];
-                        if (!resourcesDataFromEntity[possibleTarget].held)
+                        ResourceData resdat = resourcesDataFromEntity[possibleTarget];
+                        if (!resdat.held && !resdat.dying)
                         {
                             flightTarget.entity = possibleTarget;
                             flightTarget.isResource = true;
