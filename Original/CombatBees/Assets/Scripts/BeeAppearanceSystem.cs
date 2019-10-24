@@ -127,6 +127,9 @@ public class BeeAppearanceSystem : ComponentSystem
             matProps.SetVectorArray("_Color", managedBeeColors[FullBatchCount]);
             Graphics.DrawMeshInstanced(beeMesh, 0, beeMaterial, managedBeeMatrices[FullBatchCount], PartialBatchSize, matProps);
         }
+
+        Matrices.Dispose();
+        Colors.Dispose();
     }
 
     protected override void OnCreate()
