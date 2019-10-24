@@ -10,32 +10,21 @@ using UnityEngine;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public class BeeSpawner : ComponentSystem
 {
-    private NativeArray<Entity> BeePrototypes;
+    private NativeArray<EntityArchetype> BeePrototypes;
     public float minBeeSize;
     public float maxBeeSize;
     public float maxSpawnSpeed;
     private Unity.Mathematics.Random rand;
 
-
-    public void SetPrototypes(Entity Bee0, Entity Bee1)
+    private void SetupPrototypes()
     {
-        BeePrototypes[0] = Bee0;
-        BeePrototypes[1] = Bee1;
-
+        if (BeePrototypes.IsCreated)
+            BeePrototypes.Dispose();
+        BeePrototypes = new NativeArray<EntityArchetype>(2, Allocator.Persistent);
         EntityManager manager = World.Active.EntityManager;
 
-            manager.AddComponent<BeeTeam0>(Bee0);
-            manager.AddComponent<BeeTeam1>(Bee1);
-
-        foreach (Entity bee in BeePrototypes)
-        {
-
-            manager.AddComponent<BeeSize>(bee);
-            manager.AddComponent<Velocity>(bee);
-            manager.AddComponent<FlightTarget>(bee);
-            manager.AddComponent<NonUniformScale>(bee);
-        }
-
+        BeePrototypes[0] = manager.CreateArchetype(typeof(BeeTeam0), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation));
+        BeePrototypes[1] = manager.CreateArchetype(typeof(BeeTeam1), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation));
     }
 
     protected override void OnUpdate()
@@ -51,10 +40,9 @@ public class BeeSpawner : ComponentSystem
                 startingVelocity = dir / magnitude * maxSpawnSpeed;
             }
 
-            Entity spawnedEntity = manager.Instantiate(BeePrototypes[request.Team]);
-            manager.SetComponentData<BeeSize>(spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize) });
+            Entity spawnedEntity = manager.CreateEntity(BeePrototypes[request.Team]);
+            manager.SetComponentData<BeeSize>(spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize), TeamColor = request.Team });
             manager.SetComponentData<Translation>(spawnedEntity, new Translation() { Value = translation.Value });
-
             manager.SetComponentData<Velocity>(spawnedEntity, new Velocity() { v = startingVelocity });
 });
 
@@ -64,7 +52,7 @@ public class BeeSpawner : ComponentSystem
     protected override void OnCreate()
     {
         base.OnCreate();
-        BeePrototypes = new NativeArray<Entity>(2, Allocator.Persistent);
+        SetupPrototypes();        
         rand = new Unity.Mathematics.Random(3);
     }
 

@@ -111,6 +111,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
 		for (int i=0;i<startBeeCount;i++) {
 			int team = i%2;
 			SpawnBee(team);
+			SpawnBee(team);
 		}
 
 		matProps = new MaterialPropertyBlock();
@@ -287,7 +288,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
 
         //spawn bees
         BeeSpawner spawner = World.Active.GetExistingSystem<BeeSpawner>();
-        spawner.SetPrototypes(conversionSystem.GetPrimaryEntity(beePrefab0), conversionSystem.GetPrimaryEntity(beePrefab1));
+        //spawner.SetPrototypes(conversionSystem.GetPrimaryEntity(beePrefab0), conversionSystem.GetPrimaryEntity(beePrefab1));
         spawner.maxBeeSize = maxBeeSize;
         spawner.minBeeSize = minBeeSize;
         spawner.maxSpawnSpeed = maxSpawnSpeed;
@@ -331,7 +332,10 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         BeeAppearanceSystem beeAppearanceSystem = World.Active.GetOrCreateSystem<BeeAppearanceSystem>();
         beeAppearanceSystem.RotationStiffness = rotationStiffness;
         beeAppearanceSystem.SpeedStretch = speedStretch;
-
+        beeAppearanceSystem.TeamColor0 = teamColors[0];
+        beeAppearanceSystem.TeamColor1 = teamColors[1];
+        beeAppearanceSystem.beeMesh = beeMesh;
+        beeAppearanceSystem.beeMaterial = beeMaterial;
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)

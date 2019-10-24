@@ -40,13 +40,14 @@ public class DeadBeeSystem : ComponentSystem
 
         using (NativeList<Entity> entitiesToDestroy = new NativeList<Entity>(Allocator.Temp))
         {
-            Entities.ForEach((Entity e, ref Death death, ref Velocity velocity, ref Translation translation) =>
+            Entities.ForEach((Entity e, ref Death death, ref Velocity velocity, ref Translation translation, ref BeeSize beeSize) =>
             {
                 if (!death.FirstUpdateDone)
                 {
                     velocity.v *= 0.5f;
                     ParticleManager.SpawnParticle(translation.Value, ParticleType.Blood, velocity.v * .35f, 2f, 6);
                     death.FirstUpdateDone = true;
+                    beeSize.Faded = true;
                 }
 
                 if (UnityEngine.Random.value < (death.DeathTimer - .5f) * .5f)
