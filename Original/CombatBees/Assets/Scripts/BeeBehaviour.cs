@@ -185,6 +185,8 @@ public class BeeBehaviour : JobComponentSystem
     {
         public EntityArchetype deathMessageArchetype;
         public EntityCommandBuffer.Concurrent CommandBuffer;
+        [ReadOnly]
+        public ComponentDataFromEntity<Translation> TranslationsFromEntity;
 
         public void Execute(Entity e, int index, ref FlightTarget target)
         {
@@ -193,34 +195,36 @@ public class BeeBehaviour : JobComponentSystem
                 return;
             }
 
-            switch(target.PendingAction)
-            {
-                case FlightTarget.Action.GrabResource:
-                    {
-                        target.holding = true;
-                        CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                        CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
-                        CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
-                        CommandBuffer.RemoveComponent<TargetCell>(index, target.entity);
-                    }
-                    break;
+            if (TranslationsFromEntity.Exists(target.entity)) {
+                switch(target.PendingAction)
+                {
+                    case FlightTarget.Action.GrabResource:
+                        {
+                            target.holding = true;
+                            CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                            CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
+                            CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
+                            CommandBuffer.RemoveComponent<TargetCell>(index, target.entity);
+                        }
+                        break;
 
-                case FlightTarget.Action.DropResource:
-                    {
-                        CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
-                        CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                        CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
-                        target = new FlightTarget();
-                    }
-                    break;
-                case FlightTarget.Action.Kill:
-                    {
-                        Entity DeathMessage = CommandBuffer.CreateEntity(index);
-                        CommandBuffer.AddComponent<PendingDeath>(index, DeathMessage, new PendingDeath() { EntityThatWillDie = target.entity });
-                        target = new FlightTarget();
-                    }
-                    break;
-            };
+                    case FlightTarget.Action.DropResource:
+                        {
+                            CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
+                            CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                            CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
+                            target = new FlightTarget();
+                        }
+                        break;
+                    case FlightTarget.Action.Kill:
+                        {
+                            Entity DeathMessage = CommandBuffer.CreateEntity(index);
+                            CommandBuffer.AddComponent<PendingDeath>(index, DeathMessage, new PendingDeath() { EntityThatWillDie = target.entity });
+                            target = new FlightTarget();
+                        }
+                        break;
+                };
+            }
         }
     }
 
@@ -287,6 +291,7 @@ public class BeeBehaviour : JobComponentSystem
         JobHandle BothBeeBehaviourHandles = JobHandle.CombineDependencies(BeeHaviour0Handle, BeeHaviour1Handle);
 
         var resolveInteractionsJob = new BeeBehaviourResolveInteractions() { CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(), deathMessageArchetype = deathMessageArchetype};
+        resolveInteractionsJob.TranslationsFromEntity = TranslationsFromEntity;
         JobHandle resolveInteractionsHandle = resolveInteractionsJob.ScheduleSingle(this, BothBeeBehaviourHandles);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(resolveInteractionsHandle);
 
