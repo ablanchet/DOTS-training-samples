@@ -1,16 +1,17 @@
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-public class ResourceFallSystem : ComponentSystem
+public class ResourceStackingSystem : ComponentSystem
 {
     const float k_Gravity = -20f;
 
     float m_ResourcePrefabHeight;
     ResourceGround m_Ground;
 
-    public NativeArray<int> StackHeights;
+    public NativeArray<short> StackHeights;
 
     protected override void OnUpdate()
     {
@@ -22,7 +23,7 @@ public class ResourceFallSystem : ComponentSystem
 
         var dt = Time.deltaTime;
 
-        Entities.ForEach((Entity e, ref ResourceFallingTag tag, ref Translation t, ref TargetCell target) =>
+        Entities.ForEach((Entity e, ref ResourceFallingTag tag, ref Translation t, ref TargetCell target, ref ResourceHeight resourceHeight) =>
         {
             t.Value.y += k_Gravity * dt;
 
@@ -32,11 +33,23 @@ public class ResourceFallSystem : ComponentSystem
             {
                 t.Value.y = expectedGroundHeight;
                 var height = StackHeights[target.cellIdx];
+                resourceHeight.value = height;
                 StackHeights[target.cellIdx] = ++height;
 
                 PostUpdateCommands.RemoveComponent<ResourceFallingTag>(e);
             }
         });
+    }
+
+    public bool IsTopResource(TargetCell targetCell, ResourceHeight resourceHeight)
+    {
+        return StackHeights[targetCell.cellIdx] == resourceHeight.value;
+    }
+
+    public void PickTopResource(int cellIdx)
+    {
+        var height = StackHeights[cellIdx];
+        StackHeights[cellIdx] = --height < 0 ? (short)0 : height;
     }
 
     protected override void OnDestroy()

@@ -4,7 +4,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-[UpdateBefore(typeof(ResourceFallSystem))]
+[UpdateBefore(typeof(ResourceStackingSystem))]
 [UpdateAfter(typeof(AutoResourceSpawnerSystem))]
 public class ResourcePreFreeFallSystem : JobComponentSystem
 {

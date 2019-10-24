@@ -32,13 +32,17 @@ public class BeeBehaviour : JobComponentSystem
     //[BurstCompile]
     struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeSize>
     {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<short> resourceStackHeights;
+
         [ReadOnly]
         public NativeArray<Entity> Friends;
         [ReadOnly]
         public NativeArray<Entity> Enemies;
         [ReadOnly]
+        public ComponentDataFromEntity<TargetCell> resourceTargetCellFromEntity;
+        [ReadOnly]
         public ComponentDataFromEntity<Translation> TranslationsFromEntity;
-
         [ReadOnly]
         public ComponentDataFromEntity<ResourceData> ResourcesDataFromEntity;
         public float teamId;
@@ -101,13 +105,13 @@ public class BeeBehaviour : JobComponentSystem
                 if (target.isResource && !ResourcesDataFromEntity.Exists(target.entity)) {
                     // Clear the target since it doesn't exist anymore
                     CommandBuffer.SetComponent<FlightTarget>(index, e, new FlightTarget());
-                } 
+                }
                 else if (target.isResource && ResourcesDataFromEntity.Exists(target.entity))
                 {
                     // Get the resource data from the target. To check if it is being held or not
                     var resData = ResourcesDataFromEntity[target.entity];
 
-                    if (target.holding) 
+                    if (target.holding)
                     {
                         // We are holding our target, fly back to base
                         float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId, 0f, translation.Value.z);
@@ -124,8 +128,8 @@ public class BeeBehaviour : JobComponentSystem
                             CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
                             CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
                         }
-                    } 
-                    else if (sqrDist > GrabDistance * GrabDistance) 
+                    }
+                    else if (sqrDist > GrabDistance * GrabDistance)
                     {
                         //moving to resources
                         velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
@@ -137,9 +141,16 @@ public class BeeBehaviour : JobComponentSystem
                             isResource = target.isResource,
                             holding = true
                         });
+
+                        var cellIdx = resourceTargetCellFromEntity[target.entity].cellIdx;
+                        var height = resourceStackHeights[cellIdx];
+                        resourceStackHeights[cellIdx] = --height < 0 ? (short)0 : height;
+
                         CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                        CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
-                        CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
+                        CommandBuffer.AddComponent(index, target.entity, new FollowEntity { target = e });
+                        CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = true, holder = e });
+
+                        CommandBuffer.RemoveComponent<TargetCell>(index, target.entity);
                     }
                 }
                 else
@@ -219,12 +230,15 @@ public class BeeBehaviour : JobComponentSystem
 
         var TranslationsFromEntity = GetComponentDataFromEntity<Translation>(true);
         var ResourcesDataFromEntity = GetComponentDataFromEntity<ResourceData>(true);
+        var resourceTargetCellFromEntity = GetComponentDataFromEntity<TargetCell>(true);
 
         var Beehaviour0 = new BeeBehaviourJob();
         Beehaviour0.Friends = team0Entities;
         Beehaviour0.Enemies = team1Entities;
         Beehaviour0.TranslationsFromEntity = TranslationsFromEntity;
         Beehaviour0.ResourcesDataFromEntity = ResourcesDataFromEntity;
+        Beehaviour0.resourceTargetCellFromEntity = resourceTargetCellFromEntity;
+        Beehaviour0.resourceStackHeights = World.GetExistingSystem<ResourceStackingSystem>().StackHeights;
         Beehaviour0.DeltaTime = Time.fixedDeltaTime;
         Beehaviour0.TeamAttraction = TeamAttraction;
         Beehaviour0.TeamRepulsion = TeamRepulsion;
@@ -258,7 +272,7 @@ public class BeeBehaviour : JobComponentSystem
         cleanupJob.Entities0 = team0Entities;
         cleanupJob.Entities1 = team1Entities;
 
-        // Now that the job is set up, schedule it to be run. 
+        // Now that the job is set up, schedule it to be run.
         return cleanupJob.Schedule(JobHandle.CombineDependencies(BeeHaviour0Handle, BeeHaviour1Handle));
     }
 

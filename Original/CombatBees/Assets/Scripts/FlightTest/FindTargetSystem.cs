@@ -46,11 +46,18 @@ public class FindTargetSystem : JobComponentSystem
         [ReadOnly]
         public ComponentDataFromEntity<ResourceData> resourcesDataFromEntity;
         [ReadOnly]
+        public ComponentDataFromEntity<TargetCell> resourcesTargetCellFromEntity;
+        [ReadOnly]
+        public ComponentDataFromEntity<ResourceHeight> resourcesHeightFromEntity;
+
+        [ReadOnly]
         public ComponentDataFromEntity<Death> deathFromEntity;
         [ReadOnly]
         public NativeArray<Entity> ResourceList;
         [ReadOnly]
         public NativeArray<Entity> EnemyList;
+        [ReadOnly]
+        public NativeArray<short> resourceStackHeights;
         public float Aggression;
         public Unity.Mathematics.Random rand;
 
@@ -63,9 +70,8 @@ public class FindTargetSystem : JobComponentSystem
 
             if (flightTarget.entity == Entity.Null)
             {
-                if (rand.NextFloat() < Aggression)
+                if (EnemyList.Length > 0 && rand.NextFloat() < Aggression)
                 {
-                    if (EnemyList.Length > 0)
                     {
                         flightTarget.entity = EnemyList[rand.NextInt(0, EnemyList.Length)];
                         flightTarget.isResource = false;
@@ -76,10 +82,16 @@ public class FindTargetSystem : JobComponentSystem
                     if (ResourceList.Length > 0)
                     {
                         Entity possibleTarget = ResourceList[rand.NextInt(0, ResourceList.Length)];
-                        if (!resourcesDataFromEntity[possibleTarget].held)
+                        var resourceData = resourcesDataFromEntity[possibleTarget];
+                        if (!resourceData.held && resourcesTargetCellFromEntity.HasComponent(possibleTarget))
                         {
-                            flightTarget.entity = possibleTarget;
-                            flightTarget.isResource = true;
+                            var targetCell = resourcesTargetCellFromEntity[possibleTarget];
+                            var resourceHeight = resourcesHeightFromEntity[possibleTarget];
+                            if (resourceStackHeights[targetCell.cellIdx] == resourceHeight.value)
+                            {
+                                flightTarget.entity = possibleTarget;
+                                flightTarget.isResource = true;
+                            }
                         }
                     }
                 }
@@ -119,25 +131,30 @@ public class FindTargetSystem : JobComponentSystem
         JobHandle team1GatherHandle;
         Team1Entities = Team1Query.ToEntityArray(Allocator.TempJob, out team1GatherHandle);
 
-        TargetUpdateJob targetUpdateJob0 = new TargetUpdateJob();
-        targetUpdateJob0.rand = rand;
+        TargetUpdateJob targetUpdateJob0 = new TargetUpdateJob
+        {
+            rand = rand,
+            EnemyList = Team1Entities,
+            ResourceList = ResourceEntities,
+            deathFromEntity = GetComponentDataFromEntity<Death>(),
+            resourcesDataFromEntity = GetComponentDataFromEntity<ResourceData>(),
+            resourcesHeightFromEntity = GetComponentDataFromEntity<ResourceHeight>(),
+            resourcesTargetCellFromEntity = GetComponentDataFromEntity<TargetCell>(),
+            resourceStackHeights = World.GetExistingSystem<ResourceStackingSystem>().StackHeights,
+            Aggression = Aggression
+        };
+        JobHandle targetUpdate0Handle = targetUpdateJob0.Schedule(Team0Query, JobHandle.CombineDependencies(inputDeps, resourceGatherHandle, team1GatherHandle));
         rand.NextFloat();
-        targetUpdateJob0.EnemyList = Team1Entities;
-        targetUpdateJob0.ResourceList = ResourceEntities;
-        targetUpdateJob0.deathFromEntity = GetComponentDataFromEntity<Death>();
-        targetUpdateJob0.resourcesDataFromEntity = GetComponentDataFromEntity<ResourceData>();
-        targetUpdateJob0.Aggression = Aggression;
-        JobHandle TargetUpdate0Handle = targetUpdateJob0.Schedule(Team0Query, JobHandle.CombineDependencies(inputDeps, resourceGatherHandle, team1GatherHandle));
 
         TargetUpdateJob targetUpdateJob1 = targetUpdateJob0;
         targetUpdateJob1.EnemyList = Team0Entities;
-        JobHandle TargetUpdate1Handle = targetUpdateJob1.Schedule(Team1Query, JobHandle.CombineDependencies(TargetUpdate0Handle, team0GatherHandle));
+        JobHandle targetUpdate1Handle = targetUpdateJob1.Schedule(Team1Query, JobHandle.CombineDependencies(targetUpdate0Handle, team0GatherHandle));
 
         CleanupJob cleanupJob = new CleanupJob();
         cleanupJob.array0 = ResourceEntities;
         cleanupJob.array1 = Team0Entities;
         cleanupJob.array2 = Team1Entities;
 
-        return cleanupJob.Schedule(TargetUpdate1Handle);
+        return cleanupJob.Schedule(targetUpdate1Handle);
     }
 }
