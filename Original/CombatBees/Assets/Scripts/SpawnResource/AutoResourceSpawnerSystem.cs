@@ -23,8 +23,6 @@ public class AutoResourceSpawnerSystem : ComponentSystem
 
                     var instance = PostUpdateCommands.Instantiate(spawnerConfiguration.resourcePrefab);
                     PostUpdateCommands.SetComponent(instance, new Translation { Value = pos });
-                    PostUpdateCommands.AddComponent(instance, new ResourceFallingTag());
-                    PostUpdateCommands.AddComponent(instance, new ResourceData { held = false });
                 }
 
                 PostUpdateCommands.RemoveComponent<SpawnRandomResourceOnStart>(e);
