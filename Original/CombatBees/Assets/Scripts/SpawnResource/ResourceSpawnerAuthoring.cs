@@ -22,16 +22,11 @@ public class ResourceSpawnerAuthoring : MonoBehaviour, IDeclareReferencedPrefabs
         if (ResourcePrefab == null)
             return;
 
-        var prefab = conversionSystem.GetPrimaryEntity(ResourcePrefab);
-        var resourceScale = dstManager.GetComponentData<NonUniformScale>(prefab);
-        var component = new ResourceSpawnerConfiguration
+        dstManager.AddComponentData(entity, new ResourceSpawnerConfiguration
         {
-            resourcePrefab = prefab,
-            resourceScale = resourceScale.Value,
+            resourcePrefab = conversionSystem.GetPrimaryEntity(ResourcePrefab),
             spawnRate = SpawnRate
-        };
-
-        dstManager.AddComponentData(entity, component);
+        });
         dstManager.AddComponentData(entity, new SpawnRandomResourceOnStart
         {
             startResourceCount = startResourceCount
@@ -48,7 +43,6 @@ public class ResourceSpawnerAuthoring : MonoBehaviour, IDeclareReferencedPrefabs
 public struct ResourceSpawnerConfiguration : IComponentData
 {
     public Entity resourcePrefab;
-    public float3 resourceScale;
     public float spawnRate;
 }
 
