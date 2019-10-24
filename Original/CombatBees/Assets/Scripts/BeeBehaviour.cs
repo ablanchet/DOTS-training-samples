@@ -181,14 +181,14 @@ public class BeeBehaviour : JobComponentSystem
         }
     }
 
-    struct BeeBehaviourResolveInteractions : IJobForEachWithEntity<FlightTarget>
+    struct BeeBehaviourResolveInteractions : IJobForEachWithEntity<FlightTarget, Velocity>
     {
         public EntityArchetype deathMessageArchetype;
         public EntityCommandBuffer.Concurrent CommandBuffer;
         [ReadOnly]
         public ComponentDataFromEntity<Translation> TranslationsFromEntity;
 
-        public void Execute(Entity e, int index, ref FlightTarget target)
+        public void Execute(Entity e, int index, ref FlightTarget target, ref Velocity velocity)
         {
             if (target.PendingAction == FlightTarget.Action.None)
             {
@@ -212,7 +212,7 @@ public class BeeBehaviour : JobComponentSystem
                         {
                             CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
                             CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                            CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null });
+                            CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null, velocity = velocity.v });
                             target = new FlightTarget();
                         }
                         break;

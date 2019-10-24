@@ -2,6 +2,8 @@ using Unity.Entities;
 using Unity.Collections;
 using Unity.Transforms;
 using Unity.Mathematics;
+using Unity.Jobs;
+using UnityEngine;
 
 [UpdateAfter(typeof(BeeSpawner))]
 public class ResourceFlightSystem : ComponentSystem
@@ -21,7 +23,10 @@ public class ResourceFlightSystem : ComponentSystem
                 } else {
                     var targetTranslation = EntityManager.GetComponentData<Translation>(follow.target);
                     var targetSize = EntityManager.GetComponentData<BeeSize>(follow.target).Size;
-                    translation.Value = new float3(targetTranslation.Value.x, targetTranslation.Value.y - targetSize - scale.Value.y, targetTranslation.Value.z);
+                    var targetPos = targetTranslation.Value - new float3(0,1,0) * (scale.Value.y + targetSize) * .5f;
+                    var resourcePos = math.lerp(translation.Value, targetPos, 15 * Time.deltaTime);
+
+                    translation.Value = targetPos;
                 }
             }
         });

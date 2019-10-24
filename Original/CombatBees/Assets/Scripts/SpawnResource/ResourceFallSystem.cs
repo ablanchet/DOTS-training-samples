@@ -22,8 +22,10 @@ public class ResourceFallSystem : ComponentSystem
 
         var dt = Time.deltaTime;
 
-        Entities.ForEach((Entity e, ref ResourceFallingTag tag, ref Translation t, ref TargetCell target) =>
+        Entities.ForEach((Entity e, ref ResourceFallingTag tag, ref Translation t, ref TargetCell target, ref ResourceData resData) =>
         {
+            t.Value.x += resData.velocity.x * dt;
+
             t.Value.y += k_Gravity * dt;
 
             var expectedGroundHeight = m_Ground.groundHeight + m_ResourcePrefabHeight + StackHeights[target.cellIdx] * m_ResourcePrefabHeight * 2;
