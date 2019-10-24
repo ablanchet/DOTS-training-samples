@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Burst;
 
 [UpdateAfter(typeof(AutoResourceSpawnerSystem))]
 public class FindTargetSystem : JobComponentSystem
@@ -41,6 +42,7 @@ public class FindTargetSystem : JobComponentSystem
         }
     }
 
+    [BurstCompile]
     struct TargetUpdateJob : IJobForEachWithEntity<FlightTarget>
     {
         [ReadOnly]
