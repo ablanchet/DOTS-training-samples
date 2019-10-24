@@ -63,24 +63,32 @@ public class FindTargetSystem : JobComponentSystem
 
             if (flightTarget.entity == Entity.Null)
             {
-                if (rand.NextFloat() < Aggression)
+                if ((rand.NextFloat() < Aggression || ResourceList.Length == 0) && EnemyList.Length > 0)
                 {
-                    if (EnemyList.Length > 0)
-                    {
-                        flightTarget.entity = EnemyList[rand.NextInt(0, EnemyList.Length)];
-                        flightTarget.isResource = false;
-                    }
+                    flightTarget.entity = EnemyList[rand.NextInt(EnemyList.Length)];
+                    flightTarget.isResource = false;
                 }
                 else
                 {
                     if (ResourceList.Length > 0)
                     {
-                        Entity possibleTarget = ResourceList[rand.NextInt(0, ResourceList.Length)];
-                        ResourceData resdat = resourcesDataFromEntity[possibleTarget];
-                        if (!resdat.held && !resdat.dying)
-                        {
-                            flightTarget.entity = possibleTarget;
-                            flightTarget.isResource = true;
+                        Entity possibleTarget = ResourceList[rand.NextInt(ResourceList.Length)];
+                        if (resourcesDataFromEntity.Exists(possibleTarget)) {
+                            ResourceData resdat = resourcesDataFromEntity[possibleTarget];
+                            if (!resdat.held && !resdat.dying)
+                            {
+                                flightTarget.entity = possibleTarget;
+                                flightTarget.isResource = true;
+                            } else if (resdat.held && resdat.holder != entity) {
+                                // Check if its an enemy
+                                for (int i = 0; i < EnemyList.Length; i++) {
+                                    if (EnemyList[i] == resdat.holder) {
+                                        flightTarget.entity = resdat.holder;
+                                        flightTarget.isResource = false;
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -88,11 +96,21 @@ public class FindTargetSystem : JobComponentSystem
 
             if (flightTarget.entity != Entity.Null)
             {
+                // If its a resource and doesn't exist. Clear
+                if (flightTarget.isResource && !resourcesDataFromEntity.Exists(flightTarget.entity)) {
+                    flightTarget.entity = Entity.Null;
+                    flightTarget.isResource = false;
+                    flightTarget.holding = false;
+                    return;
+                }
+
                 if (flightTarget.isResource && resourcesDataFromEntity.Exists(flightTarget.entity))
                 {
                     if (!flightTarget.holding && resourcesDataFromEntity[flightTarget.entity].held)
                     {
                         flightTarget.entity = Entity.Null;
+                        flightTarget.isResource = false;
+                        flightTarget.holding = false;
                     }
                 }
                 else
@@ -100,6 +118,8 @@ public class FindTargetSystem : JobComponentSystem
                     if (deathFromEntity.HasComponent(flightTarget.entity))
                     {
                         flightTarget.entity = Entity.Null;
+                        flightTarget.isResource = false;
+                        flightTarget.holding = false;
                     }
                 }
 

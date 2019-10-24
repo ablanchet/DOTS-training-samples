@@ -201,6 +201,7 @@ public class BeeBehaviour : JobComponentSystem
                         CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
                         CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
                         CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
+                        CommandBuffer.RemoveComponent<TargetCell>(index, target.entity);
                     }
                     break;
 

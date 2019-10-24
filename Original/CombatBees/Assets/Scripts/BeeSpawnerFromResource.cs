@@ -40,7 +40,7 @@ public class BeeSpawnerFromResource : ComponentSystem
                     manager.SetComponentData<Translation>(request, new Translation { Value = t.Value });
                 }
 
-                // ParticleManager.SpawnParticle(t.Value, ParticleType.SpawnFlash, Vector3.zero, 6f, 5);
+                ParticleManager.SpawnParticle(t.Value, ParticleType.SpawnFlash, Vector3.zero, 6f, 5);
                 // DeleteResource(resource);
                 resourceData.dying = true; //delay destruction 1 frame, because we have scheduling issues where a bee will try to grab a resource as it is being destroyed
             }

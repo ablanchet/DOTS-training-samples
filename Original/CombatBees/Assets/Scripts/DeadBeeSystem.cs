@@ -20,15 +20,6 @@ public class DeadBeeSystem : ComponentSystem
             Entity target = p.EntityThatWillDie;
             if (!manager.HasComponent<Death>(target) && manager.Exists(target))
             {
-                FlightTarget flightTarget = manager.GetComponentData<FlightTarget>(target);
-
-                if (flightTarget.entity != Entity.Null && flightTarget.isResource && flightTarget.holding && manager.Exists(flightTarget.entity)) {
-                    manager.RemoveComponent<FollowEntity>(flightTarget.entity);
-                    manager.AddComponent<ResourceFallingTag>(flightTarget.entity);
-                    manager.SetComponentData<ResourceData>(flightTarget.entity, new ResourceData { held = false, holder = Entity.Null });
-                }
-
-                manager.SetComponentData<FlightTarget>(target, new FlightTarget());
                 manager.AddComponent<Death>(target);
                 manager.SetComponentData<Death>(target, new Death() { FirstUpdateDone = false, DeathTimer = 1 });
             }
@@ -37,11 +28,14 @@ public class DeadBeeSystem : ComponentSystem
 
         manager.DestroyEntity(GetEntityQuery(typeof(PendingDeath)));
 
-
         using (NativeList<Entity> entitiesToDestroy = new NativeList<Entity>(Allocator.Temp))
         {
-            Entities.ForEach((Entity e, ref Death death, ref Velocity velocity, ref Translation translation, ref BeeSize beeSize) =>
+            Entities.ForEach((Entity e, ref Death death, ref Velocity velocity, ref Translation translation, ref FlightTarget flightTarget, ref BeeSize beeSize) =>
             {
+                if (flightTarget.entity != Entity.Null && flightTarget.isResource) {
+                    flightTarget.PendingAction = FlightTarget.Action.DropResource;
+                }
+
                 if (!death.FirstUpdateDone)
                 {
                     velocity.v *= 0.5f;
