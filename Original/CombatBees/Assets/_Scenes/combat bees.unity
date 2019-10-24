@@ -238,6 +238,11 @@ MonoBehaviour:
   spawnRate: 10
   beesPerResource: 8
   startResourceCount: 500
+  matrices: []
+  gridCounts: {x: 0, y: 0}
+  gridSize: {x: 0, y: 0}
+  minGridPos: {x: 0, y: 0}
+  spawnTimer: 0
 --- !u!4 &129398392
 Transform:
   m_ObjectHideFlags: 0
@@ -287,6 +292,8 @@ MonoBehaviour:
     type: 3}
   beePrefab1: {fileID: 4694811806969051006, guid: 1fefe8bba319fcd47b53b62726ebf3e4,
     type: 3}
+  resourcePrefab: {fileID: 7149028951582796646, guid: e52aa095e30b44e4ba77b04626cd8c6e,
+    type: 3}
   beeMaterial: {fileID: 2100000, guid: 618ad2bcfdace9e4aae0954675106cd3, type: 2}
   teamColors:
   - {r: 0.30882353, g: 0.4279919, b: 1, a: 1}
@@ -307,7 +314,7 @@ MonoBehaviour:
   attackForce: 500
   hitDistance: 0.5
   maxSpawnSpeed: 75
-  startBeeCount: 100
+  startBeeCount: 0
 --- !u!4 &374635490
 Transform:
   m_ObjectHideFlags: 0
@@ -685,7 +692,7 @@ MonoBehaviour:
   ResourcePrefab: {fileID: 7149028951582796646, guid: e52aa095e30b44e4ba77b04626cd8c6e,
     type: 3}
   SpawnRate: 10
-  startResourceCount: 1000
+  startResourceCount: 3000
 --- !u!114 &1223759895
 MonoBehaviour:
   m_ObjectHideFlags: 0

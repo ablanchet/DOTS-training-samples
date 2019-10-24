@@ -7,7 +7,6 @@ using Unity.Transforms;
 using static Unity.Mathematics.math;
 using UnityEngine;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
 public class BeeSpawnerFromResource : ComponentSystem
 {
     public int beesPerResource = 8;

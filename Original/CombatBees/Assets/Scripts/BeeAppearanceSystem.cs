@@ -1,11 +1,9 @@
 ﻿using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using static Unity.Mathematics.math;
 
 public class BeeAppearanceSystem : JobComponentSystem
 {
@@ -33,7 +31,7 @@ public class BeeAppearanceSystem : JobComponentSystem
             float3 oldSmoothPos = beeSize.SmoothPosition;
             if (beeSize.Attacking == false)
             {
-                beeSize.SmoothPosition = UnityEngine.Vector3.Lerp(beeSize.SmoothPosition, translation.Value, DeltaTime * RotationStiffness);
+                beeSize.SmoothPosition = math.lerp(beeSize.SmoothPosition, translation.Value, DeltaTime * RotationStiffness);
             }
             else
             {
@@ -43,8 +41,8 @@ public class BeeAppearanceSystem : JobComponentSystem
 
             float size = beeSize.Size;
             float3 scale = new float3(size, size, size);
-            float velocityMagnitude = sqrt(velocity.v.x * velocity.v.x + velocity.v.y * velocity.v.y + velocity.v.z * velocity.v.z);
-            float stretch = Mathf.Max(1f, velocityMagnitude * SpeedStretch);
+            float velocityMagnitude = math.sqrt(velocity.v.x * velocity.v.x + velocity.v.y * velocity.v.y + velocity.v.z * velocity.v.z);
+            float stretch = math.max(1f, velocityMagnitude * SpeedStretch);
             scale.z *= stretch;
             scale.x /= (stretch - 1f) / 5f + 1f;
             scale.y /= (stretch - 1f) / 5f + 1f;

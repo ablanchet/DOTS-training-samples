@@ -22,18 +22,15 @@ public class BeeSpawner : ComponentSystem
         BeePrototypes[0] = Bee0;
         BeePrototypes[1] = Bee1;
 
-        EntityManager manager = World.Active.EntityManager;
-
-            manager.AddComponent<BeeTeam0>(Bee0);
-            manager.AddComponent<BeeTeam1>(Bee1);
+        EntityManager.AddComponent<BeeTeam0>(Bee0);
+        EntityManager.AddComponent<BeeTeam1>(Bee1);
 
         foreach (Entity bee in BeePrototypes)
         {
-
-            manager.AddComponent<BeeSize>(bee);
-            manager.AddComponent<Velocity>(bee);
-            manager.AddComponent<FlightTarget>(bee);
-            manager.AddComponent<NonUniformScale>(bee);
+            EntityManager.AddComponent<BeeSize>(bee);
+            EntityManager.AddComponent<Velocity>(bee);
+            EntityManager.AddComponent<FlightTarget>(bee);
+            EntityManager.AddComponent<NonUniformScale>(bee);
         }
 
     }

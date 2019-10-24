@@ -5,7 +5,6 @@ using Unity.Mathematics;
 using Unity.Burst;
 
 
-[Serializable]
 [BurstCompile]
 public struct BeeTeam0 : IComponentData
 {
@@ -20,8 +19,8 @@ public struct BeeTeam0 : IComponentData
     //   structs; they cannot contain references to classes.
     //
     // * You should focus on the data structure that makes the most sense
-    //   for runtime use here. Authoring Components will be used for 
+    //   for runtime use here. Authoring Components will be used for
     //   authoring the data in the Editor.
-    
-    
+
+
 }
