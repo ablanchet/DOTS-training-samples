@@ -8,8 +8,10 @@ using static Unity.Mathematics.math;
 using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-public class BeeSpawner : ComponentSystem
+public class BeeSpawner : JobComponentSystem
 {
+    EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+
     private NativeArray<EntityArchetype> BeePrototypes;
     public float minBeeSize;
     public float maxBeeSize;
@@ -27,10 +29,17 @@ public class BeeSpawner : ComponentSystem
         BeePrototypes[1] = manager.CreateArchetype(typeof(BeeTeam1), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation));
     }
 
-    protected override void OnUpdate()
+    struct BeeSpawnerJob : IJobForEachWithEntity<BeeSpawnRequest, Translation>
     {
-        EntityManager manager = World.Active.EntityManager;
-        Entities.ForEach((Entity e, ref Translation translation, ref BeeSpawnRequest request) =>
+        [ReadOnly]
+        public NativeArray<EntityArchetype> BeePrototypes;
+        public float minBeeSize;
+        public float maxBeeSize;
+        public float maxSpawnSpeed;
+        public Unity.Mathematics.Random rand;
+        public EntityCommandBuffer.Concurrent commandBuffer;
+
+        public void Execute(Entity e, int index, ref BeeSpawnRequest request, [ReadOnly] ref Translation translation)
         {
             float3 dir = rand.NextFloat3(-1.0f, 1.0f);
             float magnitude = sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
@@ -40,20 +49,39 @@ public class BeeSpawner : ComponentSystem
                 startingVelocity = dir / magnitude * maxSpawnSpeed;
             }
 
-            Entity spawnedEntity = manager.CreateEntity(BeePrototypes[request.Team]);
-            manager.SetComponentData<BeeSize>(spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize), TeamColor = request.Team });
-            manager.SetComponentData<Translation>(spawnedEntity, new Translation() { Value = translation.Value });
-            manager.SetComponentData<Velocity>(spawnedEntity, new Velocity() { v = startingVelocity });
-});
-
-        manager.DestroyEntity(GetEntityQuery(typeof(BeeSpawnRequest)));
+            Entity spawnedEntity = commandBuffer.CreateEntity(index, BeePrototypes[request.Team]);
+            commandBuffer.SetComponent<BeeSize>(index, spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize), TeamColor = request.Team });
+            commandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation() { Value = translation.Value });
+            commandBuffer.SetComponent<Velocity>(index, spawnedEntity, new Velocity() { v = startingVelocity });
+            commandBuffer.DestroyEntity(index, e);
+        }
     }
 
-    protected override void OnCreate()
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
+    {
+        if (GetEntityQuery(typeof(BeeSpawnRequest)).CalculateChunkCount() == 0)
+            return inputDeps;
+
+        var spawnJob = new BeeSpawnerJob();
+        spawnJob.commandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
+        spawnJob.maxBeeSize = maxBeeSize;
+        spawnJob.minBeeSize = minBeeSize;
+        spawnJob.maxSpawnSpeed = maxSpawnSpeed;
+        spawnJob.rand = rand;
+        rand.NextFloat();
+        spawnJob.BeePrototypes = BeePrototypes;
+
+        JobHandle handle = spawnJob.Schedule(this, inputDeps);
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(handle);
+        return handle;
+    }
+
+protected override void OnCreate()
     {
         base.OnCreate();
         SetupPrototypes();        
         rand = new Unity.Mathematics.Random(3);
+        m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
     protected override void OnDestroy()
