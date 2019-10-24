@@ -13,6 +13,7 @@ public class ResourceAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 struct ResourceData : IComponentData
 {
     public bool held;
+    public bool dying;
     public Entity holder;
 }
 
