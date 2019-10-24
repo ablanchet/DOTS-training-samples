@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
@@ -8,6 +9,8 @@ public class ResourceFallSystem : ComponentSystem
 
     float m_ResourcePrefabHeight;
     ResourceGround m_Ground;
+
+    public NativeArray<int> StackHeights;
 
     protected override void OnUpdate()
     {
@@ -23,13 +26,13 @@ public class ResourceFallSystem : ComponentSystem
         {
             t.Value.y += k_Gravity * dt;
 
-            var expectedGroundHeight = m_Ground.groundHeight + m_ResourcePrefabHeight + GridHelper.StackHeights[target.cellIdx] * m_ResourcePrefabHeight * 2;
+            var expectedGroundHeight = m_Ground.groundHeight + m_ResourcePrefabHeight + StackHeights[target.cellIdx] * m_ResourcePrefabHeight * 2;
 
             if (t.Value.y <= expectedGroundHeight)
             {
                 t.Value.y = expectedGroundHeight;
-                var height = GridHelper.StackHeights[target.cellIdx];
-                GridHelper.StackHeights[target.cellIdx] = ++height;
+                var height = StackHeights[target.cellIdx];
+                StackHeights[target.cellIdx] = ++height;
 
                 PostUpdateCommands.RemoveComponent<ResourceFallingTag>(e);
             }
@@ -38,6 +41,6 @@ public class ResourceFallSystem : ComponentSystem
 
     protected override void OnDestroy()
     {
-        GridHelper.StackHeights.Dispose();
+        StackHeights.Dispose();
     }
 }

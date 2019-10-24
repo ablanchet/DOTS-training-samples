@@ -31,7 +31,8 @@ public class ResourceGroundAuthoring : MonoBehaviour, IConvertGameObjectToEntity
         });
 
         var grid = Vector2Int.RoundToInt(new Vector2(scale.Value.x, scale.Value.z) / resourceSize);
-        GridHelper.StackHeights = new NativeArray<int>(grid.x * grid.y, Allocator.Persistent);
+
+        dstManager.World.GetOrCreateSystem<ResourceFallSystem>().StackHeights = new NativeArray<int>(grid.x * grid.y, Allocator.Persistent);
     }
 }
 

@@ -1,4 +1,3 @@
-using Unity.Collections;
 using Unity.Mathematics;
 
 public class GridHelper
@@ -14,6 +13,4 @@ public class GridHelper
 
         return new float3(x, point.y, z);
     }
-
-    public static NativeArray<int> StackHeights;
 }
