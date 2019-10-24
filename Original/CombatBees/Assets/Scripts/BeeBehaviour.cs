@@ -271,7 +271,7 @@ public class BeeBehaviour : JobComponentSystem
         rand.NextFloat();
         //Beehaviour0.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
 
-        JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, allGathersHandle);
+        JobHandle BeeHaviour0Handle = Beehaviour0.Schedule(BeeTeam0UpdateQuery, JobHandle.CombineDependencies(allGathersHandle, inputDependencies));
         //m_EntityCommandBufferSystem.AddJobHandleForProducer(BeeHaviour0Handle);
 
         var Beehaviour1 = Beehaviour0;
