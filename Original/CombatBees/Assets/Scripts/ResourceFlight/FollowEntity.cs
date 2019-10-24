@@ -1,5 +1,5 @@
-using Unity.Entities;
-
-struct FollowEntity: IComponentData {
-    public Entity target;
-}
+//using Unity.Entities;
+//
+//struct FollowEntity: IComponentData {
+//    public Entity target;
+//}
