@@ -13,6 +13,7 @@ public class ResourceAuthoring : MonoBehaviour, IConvertGameObjectToEntity
             holder = Entity.Null,
             velocity = new float3(0,0,0) 
         });
+        dstManager.AddComponent<FollowEntity>(entity);
     }
 }
 

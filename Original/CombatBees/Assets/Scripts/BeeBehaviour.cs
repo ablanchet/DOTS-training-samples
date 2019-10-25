@@ -204,8 +204,7 @@ public class BeeBehaviour : JobComponentSystem
                     case FlightTarget.Action.GrabResource:
                         {
                             target.holding = true;
-                            CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
-                            CommandBuffer.AddComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
+                            CommandBuffer.SetComponent<FollowEntity>(index, target.entity, new FollowEntity { target = e });
                             CommandBuffer.SetComponent<ResourceData>(index, target.entity, new ResourceData { held = true, holder = e });
                             CommandBuffer.RemoveComponent<TargetCell>(index, target.entity);
                         }
@@ -214,7 +213,7 @@ public class BeeBehaviour : JobComponentSystem
                     case FlightTarget.Action.DropResource:
                         {
                             CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
-                            CommandBuffer.RemoveComponent<FollowEntity>(index, target.entity);
+                            CommandBuffer.SetComponent<FollowEntity>(index, target.entity, new FollowEntity());
                             CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null, velocity = velocity.v });
                             target = new FlightTarget();
                         }

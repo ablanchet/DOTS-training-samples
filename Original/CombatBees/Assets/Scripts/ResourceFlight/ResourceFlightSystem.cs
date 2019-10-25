@@ -18,7 +18,7 @@ public class ResourceFlightSystem : ComponentSystem
         {
             if (follow.target != Entity.Null) {
                 if (EntityManager.HasComponent<Death>(follow.target)) {
-                    PostUpdateCommands.RemoveComponent<FollowEntity>(e);
+                    PostUpdateCommands.SetComponent<FollowEntity>(e, new FollowEntity());
                     PostUpdateCommands.AddComponent<ResourceFallingTag>(e);
                 } else {
                     var targetTranslation = EntityManager.GetComponentData<Translation>(follow.target);
