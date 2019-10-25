@@ -4,14 +4,11 @@ using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
 
-public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
+public class BeeManagerAuthoring : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
 {
-    public Mesh beeMesh;
     public GameObject beePrefab0;
     public GameObject beePrefab1;
     public GameObject resourcePrefab;
-    public Material beeMaterial;
-    public Color[] teamColors;
     public float minBeeSize;
     public float maxBeeSize;
     public float speedStretch;
@@ -22,11 +19,8 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
     public float teamRepulsion;
     [Range(0f, 1f)] public float damping;
     public float chaseForce;
-    public float carryForce;
-    public float grabDistance;
     public float attackDistance;
     public float attackForce;
-    public float hitDistance;
     public float maxSpawnSpeed;
     [Space(10)] public int startBeeCount;
 
@@ -51,7 +45,7 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
                 dstManager.CreateEntity(spawnRequest, spawnEntities);
                 for (var x = 0; x < spawnEntities.Length; ++x)
                 {
-                    dstManager.SetComponentData(spawnEntities[x], new BeeSpawnRequest() { Team = teamindex });
+                    dstManager.SetComponentData(spawnEntities[x], new BeeSpawnRequest() { teamIdx = teamindex });
                     dstManager.SetComponentData(spawnEntities[x], new Translation() { Value = pos });
                 }
             }
@@ -59,20 +53,17 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
 
         //set up bee flight parameters
         BeeBehaviour behaviour = dstManager.World.GetExistingSystem<BeeBehaviour>();
-        behaviour.TeamAttraction = teamAttraction;
-        behaviour.TeamRepulsion = teamRepulsion;
-        behaviour.FlightJitter = flightJitter;
-        behaviour.Damping = damping;
-        behaviour.ChaseForce = chaseForce;
-        behaviour.GrabDistance = grabDistance;
-        behaviour.AttackForce = attackForce;
-        behaviour.CarryForce = carryForce;
-        behaviour.AttackDistance = attackDistance;
-        behaviour.ResourceSize = resourcePrefab.transform.localScale.x;
+        behaviour.teamAttraction = teamAttraction;
+        behaviour.teamRepulsion = teamRepulsion;
+        behaviour.flightJitter = flightJitter;
+        behaviour.damping = damping;
+        behaviour.chaseForce = chaseForce;
+        behaviour.attackForce = attackForce;
+        behaviour.attackDistance = attackDistance;
 
         //set up target finding
-//        FindTargetSystem findTargetSystem = dstManager.World.GetExistingSystem<FindTargetSystem>();
-//        findTargetSystem.Aggression = aggression;
+        FindTargetSystem findTargetSystem = dstManager.World.GetExistingSystem<FindTargetSystem>();
+        findTargetSystem.aggression = aggression;
 
         //appearance of bees
         var beeAppearanceSystem = dstManager.World.GetExistingSystem<BeeAppearanceSystem>();
