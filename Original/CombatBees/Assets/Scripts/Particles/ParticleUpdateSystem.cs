@@ -19,6 +19,8 @@ public class ParticleUpdateSystem : JobComponentSystem
 
         public void Execute(ref ParticleComponent particle, ref Translation translation, ref Velocity velocity)
         {
+            particle.life -= DeltaTime / particle.lifeDuration;
+
             if (particle.stuck)
                 return;
 
@@ -49,8 +51,6 @@ public class ParticleUpdateSystem : JobComponentSystem
                 particle.size.y *= splat;
                 particle.stuck = true;
             }
-
-            particle.life -= DeltaTime / particle.lifeDuration;
         }
     }
     struct ParticlecleanupJob : IJobForEachWithEntity<ParticleComponent>
