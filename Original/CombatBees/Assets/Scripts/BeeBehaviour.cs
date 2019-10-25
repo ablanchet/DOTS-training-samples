@@ -31,7 +31,7 @@ public class BeeBehaviour : JobComponentSystem
 
     //burst is not currently friendly with the command buffer
     [BurstCompile]
-    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeSize>
+    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeSize, Death>
     {
         [ReadOnly]
         public NativeArray<Entity> Friends;
@@ -58,139 +58,141 @@ public class BeeBehaviour : JobComponentSystem
         public float3 FieldSize;
         //public EntityCommandBuffer.Concurrent CommandBuffer;
 
-        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, ref FlightTarget target, ref BeeSize beeSize)
+        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, ref FlightTarget target, ref BeeSize beeSize, [ReadOnly]ref Death death)
         {
-            //Jitter & Damping
-            {
-                float3 JitterVector = rand.NextFloat3(-1f, 1f);
-                float JitterLength = sqrt(JitterVector.x * JitterVector.x + JitterVector.y * JitterVector.y + JitterVector.z * JitterVector.z);
-
-                if (JitterLength != 0.0f)
-                    JitterVector /= JitterLength;
-
-                velocity.v += JitterVector * FlightJitter * math.min(DeltaTime, 0.1f);
-                velocity.v *= (1f - Damping);
-            }
-
-            //Flocking
-            {
-                Entity attractiveFriend = Friends[rand.NextInt(0, Friends.Length)];
-                float3 delta = TranslationsFromEntity[attractiveFriend].Value - translation.Value;
-                float dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
-                if (dist > 0.1f)
+            if (!death.Dying) {
+                //Jitter & Damping
                 {
-                    velocity.v += delta * (TeamAttraction * DeltaTime / dist);
+                    float3 JitterVector = rand.NextFloat3(-1f, 1f);
+                    float JitterLength = sqrt(JitterVector.x * JitterVector.x + JitterVector.y * JitterVector.y + JitterVector.z * JitterVector.z);
+
+                    if (JitterLength != 0.0f)
+                        JitterVector /= JitterLength;
+
+                    velocity.v += JitterVector * FlightJitter * math.min(DeltaTime, 0.1f);
+                    velocity.v *= (1f - Damping);
                 }
 
-                Entity repellentFriend = Friends[rand.NextInt(0, Friends.Length)];
-                delta = TranslationsFromEntity[repellentFriend].Value - translation.Value;
-                dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
-                if (dist > 0.1f)
+                //Flocking
                 {
-                    velocity.v -= delta * (TeamRepulsion * DeltaTime / dist);
-                }
-            }
-
-            //targetting resouce / enemy
-            beeSize.Attacking = false;
-            if (target.entity != Entity.Null && TranslationsFromEntity.Exists(target.entity))
-            {
-                float3 targetPosition = TranslationsFromEntity[target.entity].Value;
-                float3 targetDelta = targetPosition - translation.Value;
-                float sqrDist = targetDelta.x * targetDelta.x + targetDelta.y * targetDelta.y + targetDelta.z * targetDelta.z;
-
-                if (target.isResource && !ResourcesDataFromEntity.Exists(target.entity)) {
-                    // Clear the target since it doesn't exist anymore
-                    target = new FlightTarget();
-                } 
-                else if (target.isResource && ResourcesDataFromEntity.Exists(target.entity))
-                {
-                    // Get the resource data from the target. To check if it is being held or not
-                    var resData = ResourcesDataFromEntity[target.entity];
-
-                    if (target.holding) 
+                    Entity attractiveFriend = Friends[rand.NextInt(0, Friends.Length)];
+                    float3 delta = TranslationsFromEntity[attractiveFriend].Value - translation.Value;
+                    float dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
+                    if (dist > 0.1f)
                     {
-                        // We are holding our target, fly back to base
-                        float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId, 0f, translation.Value.z);
-                        float3 baseDelta = basePos - translation.Value;
-                        var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
-                        velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
+                        velocity.v += delta * (TeamAttraction * DeltaTime / dist);
+                    }
 
-                        if (dist < 5f) {
-                            // Remove target
-                            target.PendingAction = FlightTarget.Action.DropResource;
-                        }
+                    Entity repellentFriend = Friends[rand.NextInt(0, Friends.Length)];
+                    delta = TranslationsFromEntity[repellentFriend].Value - translation.Value;
+                    dist = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y + delta.z * delta.z);
+                    if (dist > 0.1f)
+                    {
+                        velocity.v -= delta * (TeamRepulsion * DeltaTime / dist);
+                    }
+                }
+
+                //targetting resouce / enemy
+                beeSize.Attacking = false;
+                if (target.entity != Entity.Null && TranslationsFromEntity.Exists(target.entity))
+                {
+                    float3 targetPosition = TranslationsFromEntity[target.entity].Value;
+                    float3 targetDelta = targetPosition - translation.Value;
+                    float sqrDist = targetDelta.x * targetDelta.x + targetDelta.y * targetDelta.y + targetDelta.z * targetDelta.z;
+
+                    if (target.isResource && !ResourcesDataFromEntity.Exists(target.entity)) {
+                        // Clear the target since it doesn't exist anymore
+                        target = new FlightTarget();
                     } 
-                    else if (sqrDist > GrabDistance * GrabDistance) 
+                    else if (target.isResource && ResourcesDataFromEntity.Exists(target.entity))
                     {
-                        //moving to resources
-                        velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                        // Get the resource data from the target. To check if it is being held or not
+                        var resData = ResourcesDataFromEntity[target.entity];
+
+                        if (target.holding) 
+                        {
+                            // We are holding our target, fly back to base
+                            float3 basePos = new float3(-FieldSize.x * .45f + FieldSize.x * .9f * teamId, 0f, translation.Value.z);
+                            float3 baseDelta = basePos - translation.Value;
+                            var dist = Mathf.Sqrt(baseDelta.x * baseDelta.x + baseDelta.y * baseDelta.y + baseDelta.z * baseDelta.z);
+                            velocity.v += baseDelta * (CarryForce * DeltaTime / dist);
+
+                            if (dist < 5f) {
+                                // Remove target
+                                target.PendingAction = FlightTarget.Action.DropResource;
+                            }
+                        } 
+                        else if (sqrDist > GrabDistance * GrabDistance) 
+                        {
+                            //moving to resources
+                            velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                        }
+                        else
+                        {
+                            target.PendingAction = FlightTarget.Action.GrabResource;
+                        }
                     }
                     else
                     {
-                        target.PendingAction = FlightTarget.Action.GrabResource;
+                        if (sqrDist > AttackDistance * AttackDistance)
+                        {
+                            velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                        }
+                        else
+                        {
+                            beeSize.Attacking = true;
+                            velocity.v += targetDelta * (AttackForce * DeltaTime / Mathf.Sqrt(sqrDist));
+                            target.PendingAction = FlightTarget.Action.Kill;
+                        }
                     }
                 }
-                else
+
+
+
+
+                //returning
+
+                //boundaries
+                if (System.Math.Abs(translation.Value.x) > FieldSize.x * .5f)
                 {
-                    if (sqrDist > AttackDistance * AttackDistance)
-                    {
-                        velocity.v += targetDelta * (ChaseForce * DeltaTime / Mathf.Sqrt(sqrDist));
-                    }
-                    else
-                    {
-                        beeSize.Attacking = true;
-                        velocity.v += targetDelta * (AttackForce * DeltaTime / Mathf.Sqrt(sqrDist));
-                        target.PendingAction = FlightTarget.Action.Kill;
-                    }
+                    translation.Value.x = (FieldSize.x * .5f) * Mathf.Sign(translation.Value.x);
+                    velocity.v.x *= -.5f;
+                    velocity.v.y *= .8f;
+                    velocity.v.z *= .8f;
                 }
-            }
-
-
-
-
-            //returning
-
-            //boundaries
-            if (System.Math.Abs(translation.Value.x) > FieldSize.x * .5f)
-            {
-                translation.Value.x = (FieldSize.x * .5f) * Mathf.Sign(translation.Value.x);
-                velocity.v.x *= -.5f;
-                velocity.v.y *= .8f;
-                velocity.v.z *= .8f;
-            }
-            if (System.Math.Abs(translation.Value.z) > FieldSize.z * .5f)
-            {
-                translation.Value.z = (FieldSize.z * .5f) * Mathf.Sign(translation.Value.z);
-                velocity.v.z *= -.5f;
-                velocity.v.x *= .8f;
-                velocity.v.y *= .8f;
-            }
-            float resourceModifier = 0f;
-            if (target.holding)
-            {
-                resourceModifier = ResourceSize;
-            }
-            if (System.Math.Abs(translation.Value.y) > FieldSize.y * .5f - resourceModifier)
-            {
-                translation.Value.y = (FieldSize.y * .5f - resourceModifier) * Mathf.Sign(translation.Value.y);
-                velocity.v.y *= -.5f;
-                velocity.v.z *= .8f;
-                velocity.v.x *= .8f;
+                if (System.Math.Abs(translation.Value.z) > FieldSize.z * .5f)
+                {
+                    translation.Value.z = (FieldSize.z * .5f) * Mathf.Sign(translation.Value.z);
+                    velocity.v.z *= -.5f;
+                    velocity.v.x *= .8f;
+                    velocity.v.y *= .8f;
+                }
+                float resourceModifier = 0f;
+                if (target.holding)
+                {
+                    resourceModifier = ResourceSize;
+                }
+                if (System.Math.Abs(translation.Value.y) > FieldSize.y * .5f - resourceModifier)
+                {
+                    translation.Value.y = (FieldSize.y * .5f - resourceModifier) * Mathf.Sign(translation.Value.y);
+                    velocity.v.y *= -.5f;
+                    velocity.v.z *= .8f;
+                    velocity.v.x *= .8f;
+                }
             }
         }
     }
 
-    struct BeeBehaviourResolveInteractions : IJobForEachWithEntity<FlightTarget, Velocity>
+    struct BeeBehaviourResolveInteractions : IJobForEachWithEntity<FlightTarget, Velocity, Death>
     {
-        public EntityArchetype deathMessageArchetype;
+        // public EntityArchetype deathMessageArchetype;
         public EntityCommandBuffer.Concurrent CommandBuffer;
         [ReadOnly]
         public ComponentDataFromEntity<Translation> TranslationsFromEntity;
 
-        public void Execute(Entity e, int index, ref FlightTarget target, ref Velocity velocity)
+        public void Execute(Entity e, int index, ref FlightTarget target, ref Velocity velocity, ref Death death)
         {
-            if (target.PendingAction == FlightTarget.Action.None)
+            if (target.PendingAction == FlightTarget.Action.None || death.Dying)
             {
                 return;
             }
@@ -221,8 +223,7 @@ public class BeeBehaviour : JobComponentSystem
                         break;
                     case FlightTarget.Action.Kill:
                         {
-                            Entity DeathMessage = CommandBuffer.CreateEntity(index);
-                            CommandBuffer.AddComponent<PendingDeath>(index, DeathMessage, new PendingDeath() { EntityThatWillDie = target.entity });
+                            CommandBuffer.SetComponent<Death>(index, target.entity, new Death { DeathTimer = 1, FirstUpdateDone = false, Dying = true });
                             target = new FlightTarget();
                         }
                         break;
@@ -293,7 +294,7 @@ public class BeeBehaviour : JobComponentSystem
 
         JobHandle BothBeeBehaviourHandles = JobHandle.CombineDependencies(BeeHaviour0Handle, BeeHaviour1Handle);
 
-        var resolveInteractionsJob = new BeeBehaviourResolveInteractions() { CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(), deathMessageArchetype = deathMessageArchetype};
+        var resolveInteractionsJob = new BeeBehaviourResolveInteractions() { CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()};
         resolveInteractionsJob.TranslationsFromEntity = TranslationsFromEntity;
         JobHandle resolveInteractionsHandle = resolveInteractionsJob.Schedule(this, BothBeeBehaviourHandles);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(resolveInteractionsHandle);
@@ -314,10 +315,10 @@ public class BeeBehaviour : JobComponentSystem
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         BeeTeam0GatherQuery = GetEntityQuery(typeof(BeeTeam0), typeof(Translation));
         BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
-        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
-        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
+        BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.ReadOnly<Death>());
+        BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.ReadOnly<Death>());
 
-        deathMessageArchetype = EntityManager.CreateArchetype(typeof(PendingDeath));
+        //deathMessageArchetype = EntityManager.CreateArchetype(typeof(PendingDeath));
 
         rand = new Unity.Mathematics.Random(3);
     }

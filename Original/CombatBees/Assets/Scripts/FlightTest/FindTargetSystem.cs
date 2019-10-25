@@ -21,8 +21,8 @@ public class FindTargetSystem : JobComponentSystem
         resourceQuery = GetEntityQuery(
             ComponentType.ReadOnly<ResourceData>()
         );
-        Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.Exclude<Death>(), ComponentType.ReadWrite<FlightTarget>());
-        Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.Exclude<Death>(), ComponentType.ReadWrite<FlightTarget>());
+        Team0Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam0>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadOnly<Death>());
+        Team1Query = GetEntityQuery(ComponentType.ReadOnly<BeeTeam1>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadOnly<Death>());
         rand = new Unity.Mathematics.Random(3);
 
         manager = World.Active.EntityManager;
@@ -43,7 +43,7 @@ public class FindTargetSystem : JobComponentSystem
     }
 
     [BurstCompile]
-    struct TargetUpdateJob : IJobForEachWithEntity<FlightTarget>
+    struct TargetUpdateJob : IJobForEachWithEntity<FlightTarget, Death>
     {
         [ReadOnly]
         public ComponentDataFromEntity<ResourceData> resourcesDataFromEntity;
@@ -56,75 +56,76 @@ public class FindTargetSystem : JobComponentSystem
         public float Aggression;
         public Unity.Mathematics.Random rand;
 
-        public void Execute(Entity entity, int index, ref FlightTarget flightTarget)
+        public void Execute(Entity entity, int index, ref FlightTarget flightTarget, [ReadOnly]ref Death death)
         {
-            if (flightTarget.entity == Entity.Null || !flightTarget.isResource)
-            {
-                flightTarget.holding = false;
-            }
-
-            if (flightTarget.entity == Entity.Null)
-            {
-                if ((rand.NextFloat() < Aggression || ResourceList.Length == 0) && EnemyList.Length > 0)
+            if (!death.Dying) {
+                if (flightTarget.entity == Entity.Null || !flightTarget.isResource)
                 {
-                    flightTarget.entity = EnemyList[rand.NextInt(EnemyList.Length)];
-                    flightTarget.isResource = false;
+                    flightTarget.holding = false;
                 }
-                else
+
+                if (flightTarget.entity == Entity.Null)
                 {
-                    if (ResourceList.Length > 0)
+                    if ((rand.NextFloat() < Aggression || ResourceList.Length == 0) && EnemyList.Length > 0)
                     {
-                        Entity possibleTarget = ResourceList[rand.NextInt(ResourceList.Length)];
-                        if (resourcesDataFromEntity.Exists(possibleTarget)) {
-                            ResourceData resdat = resourcesDataFromEntity[possibleTarget];
-                            if (!resdat.held && !resdat.dying)
-                            {
-                                flightTarget.entity = possibleTarget;
-                                flightTarget.isResource = true;
-                            } else if (resdat.held && resdat.holder != entity) {
-                                // Check if its an enemy
-                                for (int i = 0; i < EnemyList.Length; i++) {
-                                    if (EnemyList[i] == resdat.holder) {
-                                        flightTarget.entity = resdat.holder;
-                                        flightTarget.isResource = false;
-                                        break;
+                        flightTarget.entity = EnemyList[rand.NextInt(EnemyList.Length)];
+                        flightTarget.isResource = false;
+                    }
+                    else
+                    {
+                        if (ResourceList.Length > 0)
+                        {
+                            Entity possibleTarget = ResourceList[rand.NextInt(ResourceList.Length)];
+                            if (resourcesDataFromEntity.Exists(possibleTarget)) {
+                                ResourceData resdat = resourcesDataFromEntity[possibleTarget];
+                                if (!resdat.held && !resdat.dying)
+                                {
+                                    flightTarget.entity = possibleTarget;
+                                    flightTarget.isResource = true;
+                                } else if (resdat.held && resdat.holder != entity) {
+                                    // Check if its an enemy
+                                    for (int i = 0; i < EnemyList.Length; i++) {
+                                        if (EnemyList[i] == resdat.holder) {
+                                            flightTarget.entity = resdat.holder;
+                                            flightTarget.isResource = false;
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            if (flightTarget.entity != Entity.Null)
-            {
-                // If its a resource and doesn't exist. Clear
-                if (flightTarget.isResource && !resourcesDataFromEntity.Exists(flightTarget.entity)) {
-                    flightTarget.entity = Entity.Null;
-                    flightTarget.isResource = false;
-                    flightTarget.holding = false;
-                    return;
-                }
-
-                if (flightTarget.isResource && resourcesDataFromEntity.Exists(flightTarget.entity))
+                if (flightTarget.entity != Entity.Null)
                 {
-                    if (!flightTarget.holding && resourcesDataFromEntity[flightTarget.entity].held)
-                    {
+                    // If its a resource and doesn't exist. Clear
+                    if (flightTarget.isResource && !resourcesDataFromEntity.Exists(flightTarget.entity)) {
                         flightTarget.entity = Entity.Null;
                         flightTarget.isResource = false;
                         flightTarget.holding = false;
+                        return;
                     }
-                }
-                else
-                {
-                    if (deathFromEntity.HasComponent(flightTarget.entity))
-                    {
-                        flightTarget.entity = Entity.Null;
-                        flightTarget.isResource = false;
-                        flightTarget.holding = false;
-                    }
-                }
 
+                    if (flightTarget.isResource && resourcesDataFromEntity.Exists(flightTarget.entity))
+                    {
+                        if (!flightTarget.holding && resourcesDataFromEntity[flightTarget.entity].held)
+                        {
+                            flightTarget.entity = Entity.Null;
+                            flightTarget.isResource = false;
+                            flightTarget.holding = false;
+                        }
+                    }
+                    else
+                    {
+                        if (deathFromEntity[flightTarget.entity].Dying) {
+                            flightTarget.entity = Entity.Null;
+                            flightTarget.isResource = false;
+                            flightTarget.holding = false;
+                        }
+                    }
+
+                }
             }
         }
     }

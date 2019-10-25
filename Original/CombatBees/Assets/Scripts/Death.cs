@@ -21,5 +21,6 @@ public struct Death : IComponentData
     //   authoring the data in the Editor.
     public float DeathTimer;
     public bool FirstUpdateDone;
+    public bool Dying;
     
 }
