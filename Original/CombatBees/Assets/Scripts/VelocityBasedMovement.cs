@@ -18,6 +18,7 @@ public class VelocityBasedMovement : JobComponentSystem
     //
     // The job is also tagged with the BurstCompile attribute, which means
     // that the Burst compiler will optimize it for the best performance.
+    [ExcludeComponent(typeof(ParticleComponent))]
     [BurstCompile]
     struct VelocityBasedMovementJob : IJobForEach<Translation, Velocity>
     {
