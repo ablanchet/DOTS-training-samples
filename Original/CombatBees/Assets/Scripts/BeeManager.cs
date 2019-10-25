@@ -287,28 +287,14 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         var manager = World.Active.EntityManager;
 
         //spawn bees
-        BeeSpawner spawner = World.Active.GetExistingSystem<BeeSpawner>();
-        //spawner.SetPrototypes(conversionSystem.GetPrimaryEntity(beePrefab0), conversionSystem.GetPrimaryEntity(beePrefab1));
-        spawner.maxBeeSize = maxBeeSize;
-        spawner.minBeeSize = minBeeSize;
-        spawner.maxSpawnSpeed = maxSpawnSpeed;
+        BeeSpawner spawner = new BeeSpawner(manager, minBeeSize, maxBeeSize, maxSpawnSpeed);
 
         int[] TeamSizes = new int[2] { startBeeCount - startBeeCount / 2, startBeeCount / 2 };
-
-        EntityArchetype spawnRequest = manager.CreateArchetype(new ComponentType[] {typeof(Translation), typeof(BeeSpawnRequest)});
 
         for (sbyte teamindex = 0; teamindex < TeamSizes.Length; ++teamindex)
         {
             Vector3 pos = Vector3.right * (-Field.size.x * .4f + Field.size.x * .8f * teamindex);
-            using (NativeArray<Entity> spawnEntities = new NativeArray<Entity>(TeamSizes[teamindex], Allocator.Temp))
-            {
-                manager.CreateEntity(spawnRequest, spawnEntities);
-                for (int x = 0; x < spawnEntities.Length; ++x)
-                {
-                    manager.SetComponentData(spawnEntities[x], new BeeSpawnRequest() { Team = teamindex });
-                    manager.SetComponentData(spawnEntities[x], new Translation() { Value = pos });
-                }
-            }
+            spawner.SpawnBees(manager, pos, TeamSizes[teamindex], teamindex);
         }
 
         //set up bee flight parameters
@@ -336,6 +322,10 @@ public class BeeManager : MonoBehaviour, IConvertGameObjectToEntity, IDeclareRef
         beeAppearanceSystem.TeamColor1 = teamColors[1];
         beeAppearanceSystem.beeMesh = beeMesh;
         beeAppearanceSystem.beeMaterial = beeMaterial;
+
+        BeeSpawnerFromResource spawnFromResource = World.Active.GetOrCreateSystem<BeeSpawnerFromResource>();
+        spawnFromResource.beeSpawner = spawner;
+        spawnFromResource.beesPerResource = ResourceManager.instance.beesPerResource;
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
