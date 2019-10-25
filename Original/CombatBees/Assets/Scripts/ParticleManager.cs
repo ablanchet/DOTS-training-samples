@@ -186,6 +186,6 @@ public class ParticleManager : MonoBehaviour, IConvertGameObjectToEntity
         ParticleDrawSystem ps = World.Active.GetOrCreateSystem<ParticleDrawSystem>();
         ps.particleMesh = particleMesh;
    ps.particleMaterial = particleMaterial;
-        ps.speedStretch = speedStretch;
+        ps.SpeedStretch = speedStretch;
     }
 }
