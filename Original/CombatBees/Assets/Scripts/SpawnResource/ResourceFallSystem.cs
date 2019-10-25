@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class ResourceFallSystem : JobComponentSystem
 {
-    const float k_Gravity = -5f;
+    const float k_Gravity = -20f;
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
