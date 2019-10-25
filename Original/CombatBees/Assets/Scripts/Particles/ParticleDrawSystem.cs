@@ -39,7 +39,7 @@ public class ParticleDrawSystem : ComponentSystem
             if (particle.type == ParticleType.Blood)
             {
                 rotation = Quaternion.LookRotation(velocity.v);
-                scale.z *= 1f + Vector3.Magnitude(velocity.v) * SpeedStretch;
+                scale.y *= 1f + Vector3.Magnitude(velocity.v) * SpeedStretch;
             }
             Matrices[index] = Matrix4x4.TRS(translation.Value, rotation, scale);
             Colors[index] = particle.color;
