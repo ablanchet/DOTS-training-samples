@@ -23,8 +23,10 @@ public class ParticleUpdateSystem : JobComponentSystem
             particle.life -= DeltaTime / particle.lifeDuration;
 
             if (particle.stuck)
+            {
                 particle.life -= DeltaTime / particle.lifeDuration;
                 return;
+            }
 
             velocity.v += float3(0, 1, 0) * (Gravity * DeltaTime);
             translation.Value += velocity.v * DeltaTime;
