@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
 
-public class ParticleManager : MonoBehaviour {
+public class ParticleManager : MonoBehaviour, IConvertGameObjectToEntity
+{
 	public Mesh particleMesh;
 	public Material particleMaterial;
 	public float speedStretch;
@@ -178,4 +180,12 @@ public class ParticleManager : MonoBehaviour {
 			}
 		}
 	}
+
+    public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
+    {
+        ParticleDrawSystem ps = World.Active.GetOrCreateSystem<ParticleDrawSystem>();
+        ps.particleMesh = particleMesh;
+   ps.particleMaterial = particleMaterial;
+        ps.speedStretch = speedStretch;
+    }
 }
