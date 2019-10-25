@@ -23,7 +23,15 @@ public class ParticleDrawSystem : ComponentSystem
 
     MaterialPropertyBlock matProps;
     EntityQuery particleQuery;
+
+
+
     public ParticleSpawner Spawner;
+    //spawn limits
+    const int instancesPerBatch = 1023;
+    const int maxParticleCount = 10 * instancesPerBatch;
+    private EntityQuery ParticleQuery;
+
 
     [BurstCompile]
     struct ParticleFillRenderInfo : IJobForEachWithEntity<ParticleComponent, Velocity, Translation>
@@ -48,6 +56,10 @@ public class ParticleDrawSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
+        //disable the spawner if full
+        Spawner.Disabled = (ParticleQuery.CalculateEntityCount() >= maxParticleCount);
+
+
         var job = new ParticleFillRenderInfo();
         job.SpeedStretch = SpeedStretch;
 
@@ -100,5 +112,6 @@ public class ParticleDrawSystem : ComponentSystem
         managedMatrices = new List<Matrix4x4[]>();
         managedColors = new List<Vector4[]>();
         Spawner = new ParticleSpawner(World.Active.EntityManager);
+        ParticleQuery = GetEntityQuery(typeof(ParticleComponent));
     }
 }

@@ -11,16 +11,18 @@ public struct ParticleSpawner
 {
     private EntityArchetype ParticlePrototype;
     private Unity.Mathematics.Random rand;
-
-    //const int instancesPerBatch = 1023;
-	//const int maxParticleCount = 10*instancesPerBatch;
+    public bool Disabled;
 
     public void SpawnParticle(EntityCommandBuffer.Concurrent commandBuffer, int index, float3 location, int spawncount, ParticleType type, float lifeDuration, float3 size, float4 color, float3 velocity, float velocityJitter)
     {
+        if (Disabled)
+            return;
+
         for (int x = 0; x < spawncount; ++x)
         {
             Entity spawnedEntity = commandBuffer.CreateEntity(index, ParticlePrototype);
-            commandBuffer.SetComponent<ParticleComponent>(index, spawnedEntity, new ParticleComponent() {
+            commandBuffer.SetComponent<ParticleComponent>(index, spawnedEntity, new ParticleComponent()
+            {
                 type = type,
                 stuck = false,
                 life = 1,
@@ -28,7 +30,8 @@ public struct ParticleSpawner
                 size = size,
                 color = color
             });
-            commandBuffer.SetComponent<Velocity>(index, spawnedEntity, new Velocity {
+            commandBuffer.SetComponent<Velocity>(index, spawnedEntity, new Velocity
+            {
                 v = velocity
             });
             commandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation { Value = location });
@@ -54,7 +57,7 @@ public struct ParticleSpawner
      public ParticleSpawner(EntityManager manager)
     {
         ParticlePrototype = manager.CreateArchetype(typeof(ParticleComponent),typeof(Velocity), typeof(Translation), typeof(Rotation));
-
+        Disabled = false;
         rand = new Unity.Mathematics.Random(3);
     }
 }
