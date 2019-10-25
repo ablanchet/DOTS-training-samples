@@ -212,7 +212,7 @@ public class BeeBehaviour : JobComponentSystem
 
                     case FlightTarget.Action.DropResource:
                         {
-                            CommandBuffer.AddComponent<ResourceFallingTag>(index, target.entity, new ResourceFallingTag());
+                            CommandBuffer.SetComponent<ResourceFallingComponent>(index, target.entity, new ResourceFallingComponent() { IsFalling = true});
                             CommandBuffer.SetComponent<FollowEntity>(index, target.entity, new FollowEntity());
                             CommandBuffer.SetComponent(index, target.entity, new ResourceData { held = false, holder = Entity.Null, velocity = velocity.v });
                             target = new FlightTarget();

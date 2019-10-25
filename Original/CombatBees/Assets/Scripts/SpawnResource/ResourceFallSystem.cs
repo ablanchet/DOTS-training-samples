@@ -22,8 +22,11 @@ public class ResourceFallSystem : ComponentSystem
 
         var dt = Time.deltaTime;
 
-        Entities.ForEach((Entity e, ref ResourceFallingTag tag, ref Translation t, ref TargetCell target, ref ResourceData resData) =>
+        Entities.ForEach((Entity e, ref ResourceFallingComponent fallComponent, ref Translation t, ref TargetCell target, ref ResourceData resData) =>
         {
+            if (!fallComponent.IsFalling)
+                return;
+
             t.Value.x += resData.velocity.x * dt;
 
             t.Value.y += k_Gravity * dt;
@@ -36,7 +39,7 @@ public class ResourceFallSystem : ComponentSystem
                 var height = StackHeights[target.cellIdx];
                 StackHeights[target.cellIdx] = ++height;
 
-                PostUpdateCommands.RemoveComponent<ResourceFallingTag>(e);
+                PostUpdateCommands.SetComponent<ResourceFallingComponent>(e, new ResourceFallingComponent() { IsFalling = false});
             }
         });
     }

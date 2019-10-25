@@ -14,17 +14,18 @@ public class BeeSpawnerFromResource : JobComponentSystem
     public BeeSpawner beeSpawner;
 
     public int beesPerResource = 8;
-
-    [ExcludeComponent(typeof(ResourceFallingTag))]
-    struct BeeSpawnerJob : IJobForEachWithEntity<Translation, ResourceData>
+    struct BeeSpawnerJob : IJobForEachWithEntity<Translation, ResourceData, ResourceFallingComponent>
     {
         public int beesPerResource;
         public BeeSpawner beeSpawner;
         public EntityCommandBuffer.Concurrent CommandBuffer;
         public NativeQueue<float3>.ParallelWriter SpawnFXQueue;
 
-        public void Execute(Entity entity, int index, [ReadOnly]ref Translation translation, ref ResourceData resourceData)
+        public void Execute(Entity entity, int index, [ReadOnly]ref Translation translation, ref ResourceData resourceData, [ReadOnly] ref ResourceFallingComponent falling)
         {
+            if (falling.IsFalling)
+                return;
+
             if (resourceData.dying)
             {
                 CommandBuffer.DestroyEntity(index, entity);

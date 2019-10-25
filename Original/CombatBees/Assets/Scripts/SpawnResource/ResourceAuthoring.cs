@@ -6,7 +6,7 @@ public class ResourceAuthoring : MonoBehaviour, IConvertGameObjectToEntity
 {
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
-        dstManager.AddComponentData(entity, new ResourceFallingTag());
+        dstManager.AddComponentData(entity, new ResourceFallingComponent() { IsFalling = true }) ;
         dstManager.AddComponentData(entity, new ResourceData { 
             held = false,
             dying = false,
@@ -25,8 +25,9 @@ struct ResourceData : IComponentData
     public float3 velocity;
 }
 
-public struct ResourceFallingTag : IComponentData
+public struct ResourceFallingComponent : IComponentData
 {
+    public bool IsFalling;
 }
 
 public struct TargetCell : IComponentData

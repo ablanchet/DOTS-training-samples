@@ -14,7 +14,7 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
     protected override void OnCreate()
     {
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
-        m_Query = GetEntityQuery(ComponentType.ReadOnly<ResourceFallingTag>(),
+        m_Query = GetEntityQuery(ComponentType.ReadOnly<ResourceFallingComponent>(),
                                  ComponentType.ReadOnly<Translation>(),
                                  ComponentType.Exclude<TargetCell>());
     }
@@ -38,15 +38,18 @@ public class ResourcePreFreeFallSystem : JobComponentSystem
         return handle;
     }
 
-    struct SetTargetCellJob : IJobForEachWithEntity_EC<Translation>
+    struct SetTargetCellJob : IJobForEachWithEntity<Translation, ResourceFallingComponent>
     {
         public EntityCommandBuffer.Concurrent commandBuffer;
         public float resourceSize;
         public float2 groundBoundaries;
         public int resourcesPerRow;
 
-        public void Execute(Entity entity, int index, [ReadOnly] ref Translation t)
+        public void Execute(Entity entity, int index, [ReadOnly] ref Translation t, [ReadOnly] ref ResourceFallingComponent fallingComponent)
         {
+            if (!fallingComponent.IsFalling)
+                return;
+
             var xDistance = math.abs(t.Value.x - groundBoundaries.x);
             var zDistance = math.abs(t.Value.z - groundBoundaries.y);
 
