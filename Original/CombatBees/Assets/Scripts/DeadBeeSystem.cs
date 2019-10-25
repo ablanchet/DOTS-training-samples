@@ -10,9 +10,11 @@ using static Unity.Mathematics.math;
 [UpdateBefore(typeof(VelocityBasedMovement)), UpdateAfter(typeof(BeeBehaviour))]
 public class DeadBeeSystem : ComponentSystem
 {
+
     protected override void OnUpdate()
     {
         float deltaTime = Time.fixedDeltaTime;
+        NativeQueue<BloodInfo>.ParallelWriter BloodEffectsQueue = World.GetExistingSystem<StartFxSystem>().GetBloodQueue().AsParallelWriter();
 
         EntityManager manager = World.Active.EntityManager;
         Entities.ForEach((Entity e, ref PendingDeath p) =>
@@ -39,14 +41,16 @@ public class DeadBeeSystem : ComponentSystem
                 if (!death.FirstUpdateDone)
                 {
                     velocity.v *= 0.5f;
-                    ParticleManager.SpawnParticle(translation.Value, ParticleType.Blood, velocity.v * .35f, 2f, 6);
+                    //ParticleManager.SpawnParticle(translation.Value, ParticleType.Blood, velocity.v * .35f, 2f, 6);
+                    BloodEffectsQueue.Enqueue(new BloodInfo() { Position = translation.Value, Velocity = velocity.v, VelocityJitter = 2f, count = 6 });
                     death.FirstUpdateDone = true;
                     beeSize.Faded = true;
                 }
 
                 if (UnityEngine.Random.value < (death.DeathTimer - .5f) * .5f)
                 {
-                    ParticleManager.SpawnParticle(translation.Value, ParticleType.Blood, Vector3.zero);
+                    //ParticleManager.SpawnParticle(translation.Value, ParticleType.Blood, Vector3.zero);
+                    BloodEffectsQueue.Enqueue(new BloodInfo() { Position = translation.Value, Velocity = Vector3.zero, VelocityJitter = 6f, count = 1 });
                 }
 
                 velocity.v.y += Field.gravity * deltaTime;
