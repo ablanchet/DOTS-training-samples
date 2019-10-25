@@ -29,6 +29,7 @@ public struct BeeSpawner
             manager.SetComponentData<BeeSize>(spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize), TeamColor = team });
             manager.SetComponentData<Translation>(spawnedEntity, new Translation() { Value = location });
             manager.SetComponentData<Velocity>(spawnedEntity, GetInitialVelocity(ref rand));
+            manager.SetComponentData<Death>(spawnedEntity, new Death { Dying = false });
         }
     }
     public void SpawnBees(EntityCommandBuffer.Concurrent commandBuffer, int index, float3 location, int spawncount, sbyte team)
@@ -39,6 +40,7 @@ public struct BeeSpawner
             commandBuffer.SetComponent<BeeSize>(index, spawnedEntity, new BeeSize() { Size = rand.NextFloat(minBeeSize, maxBeeSize), TeamColor = team });
             commandBuffer.SetComponent<Translation>(index, spawnedEntity, new Translation() { Value = location });
             commandBuffer.SetComponent<Velocity>(index, spawnedEntity, GetInitialVelocity(ref rand));
+            commandBuffer.SetComponent<Death>(index, spawnedEntity, new Death { Dying = false });
         }
     }
 
@@ -57,8 +59,8 @@ public struct BeeSpawner
         maxBeeSize = _maxBeeSize;
         maxSpawnSpeed = _maxSpawnSpeed;
 
-        BeePrototype0 = manager.CreateArchetype(typeof(BeeTeam0), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation));
-        BeePrototype1 = manager.CreateArchetype(typeof(BeeTeam1), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation));
+        BeePrototype0 = manager.CreateArchetype(typeof(BeeTeam0), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation), typeof(Death));
+        BeePrototype1 = manager.CreateArchetype(typeof(BeeTeam1), typeof(BeeSize), typeof(Velocity), typeof(FlightTarget), typeof(Translation), typeof(Death));
 
         rand = new Unity.Mathematics.Random(3);
     }
