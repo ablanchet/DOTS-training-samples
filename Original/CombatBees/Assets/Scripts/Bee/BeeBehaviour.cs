@@ -31,8 +31,8 @@ public class BeeBehaviour : JobComponentSystem
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
         m_BeeTeam0GatherQuery = GetEntityQuery(typeof(BeeTeam0), typeof(Translation));
         m_BeeTeam1GatherQuery = GetEntityQuery(typeof(BeeTeam1), typeof(Translation));
-        m_BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
-        m_BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeSize>(), ComponentType.Exclude<Death>());
+        m_BeeTeam0UpdateQuery = GetEntityQuery(typeof(BeeTeam0), ComponentType.Exclude<BeeTeam1>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeAppearance>(), ComponentType.Exclude<Death>());
+        m_BeeTeam1UpdateQuery = GetEntityQuery(typeof(BeeTeam1), ComponentType.Exclude<BeeTeam0>(), ComponentType.ReadWrite<Translation>(), ComponentType.ReadWrite<Velocity>(), ComponentType.ReadWrite<FlightTarget>(), ComponentType.ReadWrite<BeeAppearance>(), ComponentType.Exclude<Death>());
         m_Rand = new Random(3);
     }
 
@@ -82,7 +82,7 @@ public class BeeBehaviour : JobComponentSystem
         }.Schedule(beeHaviour1Handle);
     }
 
-    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeSize>
+    struct BeeBehaviourJob : IJobForEachWithEntity<Translation, Velocity, FlightTarget, BeeAppearance>
     {
         [ReadOnly]
         public NativeArray<Entity> friends;
@@ -104,7 +104,7 @@ public class BeeBehaviour : JobComponentSystem
 
         public EntityCommandBuffer.Concurrent commandBuffer;
 
-        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, ref FlightTarget target, ref BeeSize beeSize)
+        public void Execute(Entity e, int index, [ReadOnly]ref Translation translation, ref Velocity velocity, ref FlightTarget target, ref BeeAppearance beeAppearance)
         {
             //Jitter & Damping
             {
@@ -138,7 +138,7 @@ public class BeeBehaviour : JobComponentSystem
             }
 
             //targetting resouce / enemy
-            beeSize.Attacking = false;
+            beeAppearance.Attacking = false;
             if (target.entity != Entity.Null && translationsFromEntity.Exists(target.entity))
             {
                 var targetPosition = translationsFromEntity[target.entity].Value;
@@ -151,7 +151,7 @@ public class BeeBehaviour : JobComponentSystem
                 }
                 else
                 {
-                    beeSize.Attacking = true;
+                    beeAppearance.Attacking = true;
                     velocity.v += targetDelta * (attackForce * deltaTime / sqrt(sqrDist));
 
                     var deathMessage = commandBuffer.CreateEntity(index);

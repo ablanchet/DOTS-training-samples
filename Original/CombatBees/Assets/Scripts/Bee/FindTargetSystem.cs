@@ -22,8 +22,8 @@ public class FindTargetSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var team0Entities = m_Team0Query.ToEntityArray(Allocator.TempJob);
-        var team1Entities = m_Team1Query.ToEntityArray(Allocator.TempJob);
+        var team0Entities = m_Team0Query.ToEntityArray(Allocator.TempJob, out var tqh0);
+        var team1Entities = m_Team1Query.ToEntityArray(Allocator.TempJob,out var tqh1);
 
         var handle0 = new TargetUpdateJob
         {
@@ -31,7 +31,7 @@ public class FindTargetSystem : JobComponentSystem
             enemyList = team1Entities,
             deathFromEntity = GetComponentDataFromEntity<Death>(),
             aggression = aggression
-        }.Schedule(m_Team0Query, inputDeps);
+        }.Schedule(m_Team0Query, JobHandle.CombineDependencies(inputDeps, tqh1));
 
         var handle1 = new TargetUpdateJob
         {
@@ -39,7 +39,7 @@ public class FindTargetSystem : JobComponentSystem
             enemyList = team0Entities,
             deathFromEntity = GetComponentDataFromEntity<Death>(),
             aggression = aggression
-        }.Schedule(m_Team1Query, JobHandle.CombineDependencies(inputDeps, handle0));
+        }.Schedule(m_Team1Query, JobHandle.CombineDependencies(handle0, tqh0));
 
         return new CleanupJob
             {

@@ -5,7 +5,7 @@ public struct BeeTeam0 : IComponentData { }
 
 public struct BeeTeam1 : IComponentData { }
 
-public struct BeeSize : IComponentData
+public struct BeeAppearance : IComponentData
 {
     public float Size;
     public bool Attacking; //used to change the bee appearance during an attack
@@ -28,4 +28,9 @@ public struct Death : IComponentData
 {
     public float DeathTimer;
     public bool FirstUpdateDone;
+}
+
+struct FlightTarget: IComponentData
+{
+    public Entity entity;
 }

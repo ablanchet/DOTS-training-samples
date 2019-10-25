@@ -23,7 +23,7 @@ public class BeeSpawner : ComponentSystem
 
         foreach (var bee in m_BeePrototypes)
         {
-            EntityManager.AddComponent<BeeSize>(bee);
+            EntityManager.AddComponent<BeeAppearance>(bee);
             EntityManager.AddComponent<Velocity>(bee);
             EntityManager.AddComponent<FlightTarget>(bee);
             EntityManager.AddComponent<NonUniformScale>(bee);
@@ -47,7 +47,7 @@ public class BeeSpawner : ComponentSystem
                 startingVelocity = dir / magnitude * maxSpawnSpeed;
 
             var spawnedEntity = EntityManager.Instantiate(m_BeePrototypes[request.teamIdx]);
-            EntityManager.SetComponentData(spawnedEntity, new BeeSize { Size = m_Rand.NextFloat(minBeeSize, maxBeeSize) });
+            EntityManager.SetComponentData(spawnedEntity, new BeeAppearance { Size = m_Rand.NextFloat(minBeeSize, maxBeeSize) });
             EntityManager.SetComponentData(spawnedEntity, new Translation { Value = translation.Value });
             EntityManager.SetComponentData(spawnedEntity, new Velocity { v = startingVelocity });
 
