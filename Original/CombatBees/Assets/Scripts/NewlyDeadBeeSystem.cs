@@ -98,4 +98,8 @@ public class NewlyDeadBeeSystem : JobComponentSystem
         pendingDeathQuery = World.EntityManager.CreateEntityQuery(typeof(PendingDeath));
         AlreadyDead = new NativeHashMap<Entity, bool>(1024, Allocator.Persistent);
     }
+    protected override void OnDestroy()
+    {
+        AlreadyDead.Dispose();
+    }
 }
