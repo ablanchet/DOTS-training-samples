@@ -12,8 +12,8 @@ public struct ParticleSpawner
     private EntityArchetype ParticlePrototype;
     private Unity.Mathematics.Random rand;
 
-    const int instancesPerBatch = 1023;
-	const int maxParticleCount = 10*instancesPerBatch;
+    //const int instancesPerBatch = 1023;
+	//const int maxParticleCount = 10*instancesPerBatch;
 
     public void SpawnParticle(EntityCommandBuffer.Concurrent commandBuffer, int index, float3 location, int spawncount, ParticleType type, float lifeDuration, float3 size, float4 color, float3 velocity, float velocityJitter)
     {
@@ -36,7 +36,7 @@ public struct ParticleSpawner
     }
 
     public void CreateBlood(EntityCommandBuffer.Concurrent commandBuffer, int index, float3 location, int spawnCount, float3 velocity, float velocityJitter=6f) {
-        float4 color = new float4(rand.NextFloat(-.05f,.05f), rand.NextFloat(.75f,1f), rand.NextFloat(.3f,.8f), 1f);
+        float4 color = new float4(0.8f+rand.NextFloat(0.2f), rand.NextFloat(0.15f), rand.NextFloat(0.15f), 1f) * rand.NextFloat(0.7f, 0.9f);
         float3 size = rand.NextFloat3(.1f, .2f);
         float lifeDuration = rand.NextFloat(3f, 5f);
         velocity = velocity + rand.NextFloat3(-1, 1) * 5f;
