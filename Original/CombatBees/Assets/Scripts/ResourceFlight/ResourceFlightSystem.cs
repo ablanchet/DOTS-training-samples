@@ -4,6 +4,7 @@ using Unity.Transforms;
 using Unity.Mathematics;
 using Unity.Jobs;
 using UnityEngine;
+using Unity.Burst;
 
 [UpdateAfter(typeof(BeeSpawner))]
 public class ResourceFlightSystem : JobComponentSystem
@@ -12,6 +13,7 @@ public class ResourceFlightSystem : JobComponentSystem
     NativeHashMap<Entity, float3> followPositions;
 
 
+    [BurstCompile]
     struct GatherFollowPositionsJob : IJobForEach<FollowEntity>
     {
         public NativeHashMap<Entity, float3>.ParallelWriter followPositions;
@@ -26,7 +28,7 @@ public class ResourceFlightSystem : JobComponentSystem
         }
     }
 
-
+    [BurstCompile]
     struct ResourceFlightJob : IJobForEach<FollowEntity, Translation, NonUniformScale, ResourceFallingComponent, ResourceData>
     {
         [ReadOnly]
@@ -37,7 +39,7 @@ public class ResourceFlightSystem : JobComponentSystem
         public NativeHashMap<Entity, float3> followPositions;
 
         public float deltaTime;
-    
+
         public void Execute(ref FollowEntity follow, ref Translation translation, [ReadOnly]ref NonUniformScale scale, ref ResourceFallingComponent fallComponent, ref ResourceData resourceData)
         {
             if (follow.target != Entity.Null)
@@ -50,7 +52,7 @@ public class ResourceFlightSystem : JobComponentSystem
                 }
                 else
                 {
-                    var followPosition  = followPositions[follow.target];
+                    var followPosition = followPositions[follow.target];
                     var targetSize = beeSizeFromEntity[follow.target].Size;
                     var targetPos = followPosition - new float3(0, 1, 0) * (scale.Value.y + targetSize) * .5f;
                     var resourcePos = math.lerp(translation.Value, targetPos, 15 * deltaTime);
@@ -106,12 +108,12 @@ public class ResourceFlightSystem : JobComponentSystem
 
         var gatherFollowPositionsJob = new GatherFollowPositionsJob();
         gatherFollowPositionsJob.followPositions = followPositions.AsParallelWriter();
-        gatherFollowPositionsJob.translationFromEntity= GetComponentDataFromEntity<Translation>();
+        gatherFollowPositionsJob.translationFromEntity = GetComponentDataFromEntity<Translation>();
         JobHandle gatherHandle = gatherFollowPositionsJob.Schedule(this, inputDeps);
 
         var job = new ResourceFlightJob();
         job.beeSizeFromEntity = GetComponentDataFromEntity<BeeSize>();
-        job.deathFromEntity= GetComponentDataFromEntity<Death>();
+        job.deathFromEntity = GetComponentDataFromEntity<Death>();
         job.followPositions = followPositions;
         job.deltaTime = Time.deltaTime;
         return job.Schedule(this, gatherHandle);
