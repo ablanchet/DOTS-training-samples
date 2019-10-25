@@ -11,4 +11,5 @@ public struct ParticleComponent : IComponentData
     public float life;
     public float lifeDuration;
     float4 color;
+    float size;
 }
