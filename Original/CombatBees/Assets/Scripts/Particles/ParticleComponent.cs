@@ -7,9 +7,9 @@ using Unity.Mathematics;
 public struct ParticleComponent : IComponentData
 {
     public ParticleType type;
-    bool stuck;
+    public bool stuck;
     public float life;
     public float lifeDuration;
-    float4 color;
-    float size;
+    public float4 color;
+    public float3 size;
 }
