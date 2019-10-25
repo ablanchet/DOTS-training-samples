@@ -16,37 +16,39 @@ public class ParticleUpdateSystem : JobComponentSystem
     {
         public float DeltaTime;
         public float Gravity;
+        public float3 FieldSize;
 
         public void Execute(ref ParticleComponent particle, ref Translation translation, ref Velocity velocity)
         {
             particle.life -= DeltaTime / particle.lifeDuration;
 
             if (particle.stuck)
+                particle.life -= DeltaTime / particle.lifeDuration;
                 return;
 
             velocity.v += float3(0, 1, 0) * (Gravity * DeltaTime);
             translation.Value += velocity.v * DeltaTime;
 
-            if (System.Math.Abs(translation.Value.x) > Field.size.x * .5f)
+            if (math.abs(translation.Value.x) > FieldSize.x * .5f)
             {
-                translation.Value.x = Field.size.x * .5f * Mathf.Sign(translation.Value.x);
-                float splat = Mathf.Abs(velocity.v.x * .3f) + 1f;
+                translation.Value.x = FieldSize.x * .5f * math.sign(translation.Value.x);
+                float splat = math.abs(velocity.v.x * .3f) + 1f;
                 particle.size.y *= splat;
                 particle.size.z *= splat;
                 particle.stuck = true;
             }
-            if (System.Math.Abs(translation.Value.y) > Field.size.y * .5f)
+            if (math.abs(translation.Value.y) > FieldSize.y * .5f)
             {
-                translation.Value.y = Field.size.y * .5f * Mathf.Sign(translation.Value.y);
-                float splat = Mathf.Abs(velocity.v.y * .3f) + 1f;
+                translation.Value.y = FieldSize.y * .5f * math.sign(translation.Value.y);
+                float splat = math.abs(velocity.v.y * .3f) + 1f;
                 particle.size.z *= splat;
                 particle.size.x *= splat;
                 particle.stuck = true;
             }
-            if (System.Math.Abs(translation.Value.z) > Field.size.z * .5f)
+            if (math.abs(translation.Value.z) > FieldSize.z * .5f)
             {
-                translation.Value.z = Field.size.z * .5f * Mathf.Sign(translation.Value.z);
-                float splat = Mathf.Abs(velocity.v.z * .3f) + 1f;
+                translation.Value.z = FieldSize.z * .5f * math.sign(translation.Value.z);
+                float splat = math.abs(velocity.v.z * .3f) + 1f;
                 particle.size.x *= splat;
                 particle.size.y *= splat;
                 particle.stuck = true;
@@ -69,6 +71,7 @@ public class ParticleUpdateSystem : JobComponentSystem
         var job = new ParticleUpdateSystemJob();
         job.DeltaTime = Time.deltaTime;
         job.Gravity = Field.gravity;
+        job.FieldSize = Field.size;
         JobHandle updateHandle = job.Schedule(this, inputDependencies);
 
         var cleanupJob = new ParticlecleanupJob();

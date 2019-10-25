@@ -23,6 +23,7 @@ public class ParticleDrawSystem : ComponentSystem
 
     MaterialPropertyBlock matProps;
     EntityQuery particleQuery;
+    public ParticleSpawner Spawner;
 
     [BurstCompile]
     struct ParticleFillRenderInfo : IJobForEachWithEntity<ParticleComponent, Velocity, Translation>
@@ -98,5 +99,6 @@ public class ParticleDrawSystem : ComponentSystem
         matProps = new MaterialPropertyBlock();
         managedMatrices = new List<Matrix4x4[]>();
         managedColors = new List<Vector4[]>();
+        Spawner = new ParticleSpawner(World.Active.EntityManager);
     }
 }

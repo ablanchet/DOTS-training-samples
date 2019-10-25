@@ -19,7 +19,9 @@ public class BeeSpawnerFromResource : JobComponentSystem
         public int beesPerResource;
         public BeeSpawner beeSpawner;
         public EntityCommandBuffer.Concurrent CommandBuffer;
-        public NativeQueue<float3>.ParallelWriter SpawnFXQueue;
+        //public NativeQueue<float3>.ParallelWriter SpawnFXQueue;
+
+        public ParticleSpawner particleSpawner;
 
         public void Execute(Entity entity, int index, [ReadOnly]ref Translation translation, ref ResourceData resourceData, [ReadOnly] ref ResourceFallingComponent falling)
         {
@@ -41,8 +43,10 @@ public class BeeSpawnerFromResource : JobComponentSystem
                 }
 
                 beeSpawner.SpawnBees(CommandBuffer, index, translation.Value, beesPerResource, team);
+                particleSpawner.CreateSpawnFlash(CommandBuffer, index, translation.Value, 1, new float3(0,0,0), 6f);
 
-                SpawnFXQueue.Enqueue(translation.Value);
+
+                //SpawnFXQueue.Enqueue(translation.Value);
                 //ParticleManager.SpawnParticle(translation.Value, ParticleType.SpawnFlash, Vector3.zero, 6f, 5);
                 // DeleteResource(resource);
                 resourceData.dying = true; //delay destruction 1 frame, because we have scheduling issues where a bee will try to grab a resource as it is being destroyed
@@ -58,7 +62,8 @@ public class BeeSpawnerFromResource : JobComponentSystem
         job.beeSpawner = beeSpawner;
         beeSpawner.AdvanceRandomizer();
         job.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
-        job.SpawnFXQueue = World.Active.GetExistingSystem<StartFxSystem>().GetSpawnQueue().AsParallelWriter();
+        //job.SpawnFXQueue = World.Active.GetExistingSystem<StartFxSystem>().GetSpawnQueue().AsParallelWriter();
+        job.particleSpawner = World.Active.GetExistingSystem<ParticleDrawSystem>().Spawner;
 
         JobHandle handle = job.Schedule(this, inputDeps);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(handle);

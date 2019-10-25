@@ -19,9 +19,10 @@ public class DeadBeeSystem : JobComponentSystem
         public float deltaTime;
         public float gravity;
         public float floorY;
-        public NativeQueue<BloodInfo>.ParallelWriter BloodEffectsQueue;
+        //public NativeQueue<BloodInfo>.ParallelWriter BloodEffectsQueue;
         public EntityCommandBuffer.Concurrent CommandBuffer;
         public Unity.Mathematics.Random rand;
+        public ParticleSpawner particleSpawner;
 
         public void Execute(Entity entity, int index, ref Death death, ref Velocity velocity, ref BeeSize beeSize, ref FlightTarget flightTarget, [ReadOnly] ref Translation translation)
         {
@@ -34,14 +35,16 @@ public class DeadBeeSystem : JobComponentSystem
                 if (!death.FirstUpdateDone)
                 {
                     velocity.v *= 0.5f;
-                    BloodEffectsQueue.Enqueue(new BloodInfo() { Position = translation.Value, Velocity = velocity.v, VelocityJitter = 2f, count = 6 });
+                    particleSpawner.CreateBlood(CommandBuffer, index, translation.Value, 6, velocity.v, 2f);
+                    //BloodEffectsQueue.Enqueue(new BloodInfo() { Position = translation.Value, Velocity = velocity.v, VelocityJitter = 2f, count = 6 });
                     death.FirstUpdateDone = true;
                     beeSize.Faded = true;
                 }
 
                 if (rand.NextFloat() < (death.DeathTimer - .5f) * .5f)
                 {
-                    BloodEffectsQueue.Enqueue(new BloodInfo() { Position = translation.Value, Velocity = Vector3.zero, VelocityJitter = 6f, count = 1 });
+                    particleSpawner.CreateBlood(CommandBuffer, index, translation.Value, 1, float3(Vector3.zero), 6f);
+                    //BloodEffectsQueue.Enqueue(new BloodInfo() { Position = translation.Value, Velocity = Vector3.zero, VelocityJitter = 6f, count = 1 });
                 }
 
                 velocity.v.y += gravity * deltaTime;
@@ -63,12 +66,12 @@ public class DeadBeeSystem : JobComponentSystem
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         float deltaTime = Time.fixedDeltaTime;
-        NativeQueue<BloodInfo>.ParallelWriter BloodEffectsQueue = World.GetExistingSystem<StartFxSystem>().GetBloodQueue().AsParallelWriter();
+        ParticleSpawner particleSpawner = World.GetExistingSystem<ParticleDrawSystem>().Spawner;
 
         //the already dead (bees that have the Death tag)
         var processDeadJob = new ProcessDeadJob();
         processDeadJob.CommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent();
-        processDeadJob.BloodEffectsQueue = BloodEffectsQueue;
+        processDeadJob.particleSpawner = particleSpawner;
         processDeadJob.deltaTime = deltaTime;
         processDeadJob.gravity = Field.gravity;
         processDeadJob.floorY = (-Field.size.y / 2);
