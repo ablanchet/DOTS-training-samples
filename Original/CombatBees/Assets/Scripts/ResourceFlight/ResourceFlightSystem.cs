@@ -17,7 +17,7 @@ public class ResourceFlightSystem : ComponentSystem
         Entities.ForEach((Entity e, ref FollowEntity follow, ref Translation translation, ref NonUniformScale scale) =>
         {
             if (follow.target != Entity.Null) {
-                if (EntityManager.HasComponent<Death>(follow.target)) {
+                if (EntityManager.GetComponentData<Death>(follow.target).Dying) {
                     PostUpdateCommands.SetComponent<FollowEntity>(e, new FollowEntity());
                     PostUpdateCommands.SetComponent<ResourceFallingComponent>(e, new ResourceFallingComponent(){IsFalling = true});
                 } else {
